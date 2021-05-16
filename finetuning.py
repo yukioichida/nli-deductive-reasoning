@@ -12,7 +12,7 @@ import argparse
 ssl._create_default_https_context = ssl._create_unverified_context
 
 
-def validate(model, val_dataloader, metric, epoch):
+def validate(model, val_dataloader, metric):
     model.eval()
     with torch.no_grad():
         for step, batch in enumerate(val_dataloader):
@@ -53,7 +53,7 @@ def get_optimizers(model: torch.nn.Module, lr: float, max_train_steps: float):
     return optimizer, lr_scheduler
 
 
-def get_dataloaders(train_batch_size: int, val_batch_size: int, tokenizer: XLNetTokenizer, tokenizer_workers: int = 8):
+def get_dataloaders(train_batch_size: int, val_batch_size: int, tokenizer: XLNetTokenizer, tokenizer_workers: int = 20):
     mnli_dataset = load_dataset('glue', 'mnli')
     print(mnli_dataset.column_names)
     dataset = mnli_dataset.map(
