@@ -6,6 +6,7 @@ from transformers import AdamW, get_scheduler
 from transformers import XLNetForSequenceClassification, XLNetConfig, XLNetTokenizer
 
 import ssl
+import logging
 import math
 import argparse
 
@@ -65,6 +66,27 @@ def get_dataloaders(train_batch_size: int, val_batch_size: int, tokenizer: XLNet
     return train_dataloader, val_matched_dataloader
 
 
+def get_logger():
+    # set up logging to file
+    format = '[%(asctime)s]- %(message)s'
+    logging.basicConfig(
+        filename='train_details.log',
+        level=logging.INFO,
+        format=format,
+        datefmt='%H:%M:%S'
+    )
+    # set up logging to console
+    console = logging.StreamHandler()
+    console.setLevel(logging.DEBUG)
+    # set a format which is simpler for console use
+    formatter = logging.Formatter(format)
+    console.setFormatter(formatter)
+    # add the handler to the root logger
+    logging.getLogger().addHandler(console)
+    logger = logging.getLogger(__name__)
+    return logger
+
+
 def train(lr: float, train_batch_size: int, val_batch_size: int, gradient_accumulation_steps: int, val_step: int,
           epochs=int):
     model_name = 'xlnet-base-cased'
@@ -74,6 +96,8 @@ def train(lr: float, train_batch_size: int, val_batch_size: int, gradient_accumu
     if torch.cuda.is_available():
         model = model.to('cuda')
     
+    log = get_logger()
+    
     train_dataloader, val_dataloader = get_dataloaders(train_batch_size=train_batch_size,
                                                        val_batch_size=val_batch_size,
                                                        tokenizer=tokenizer)
@@ -81,11 +105,10 @@ def train(lr: float, train_batch_size: int, val_batch_size: int, gradient_accumu
     num_update_steps_per_epoch = math.ceil(train_loader_len / gradient_accumulation_steps)
     max_train_steps = args.epochs * num_update_steps_per_epoch
     metric = load_metric("accuracy")
-    
     optimizer, lr_scheduler = get_optimizers(model=model, lr=lr, max_train_steps=max_train_steps)
     
     # Train
-    print("Train...")
+    log.info("Train...")
     for epoch in range(epochs):
         for step, batch in tqdm(enumerate(train_dataloader), total=train_loader_len):
             model.train()
@@ -107,7 +130,8 @@ def train(lr: float, train_batch_size: int, val_batch_size: int, gradient_accumu
                 lr_scheduler.step()
                 optimizer.zero_grad()
             if (step + 1) % val_step == 0:
-                validate(model, val_dataloader, metric)
+                val_acc = validate(model, val_dataloader, metric)
+                log.info(f"{epoch} - {step} - Val acc matched: {val_acc:.4f}")
 
 
 if __name__ == '__main__':
