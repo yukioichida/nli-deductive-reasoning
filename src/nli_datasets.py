@@ -29,7 +29,7 @@ class NLIDatasets:
                                        max_length=self.max_length),
             batched=True,
             num_proc=thread)
-        
+        # removing empty sets
         empty_keys = [k for k in loaded_dataset.keys() if len(loaded_dataset[k]) == 0]
         [loaded_dataset.pop(k) for k in empty_keys]
         
@@ -43,7 +43,6 @@ class NLIDatasets:
         print(f"SNLI Train Set length: {len(train_snli_dataset)}")
         train_dataset = concatenate_datasets([train_mnli_dataset, train_snli_dataset])
         print(f"Total train length {len(train_dataset)}")
-        print(set(train_dataset['label']))
         return DataLoader(train_dataset, batch_size=train_batch_size)
     
     def get_mnli_dev_dataloaders(self, val_batch_size: int) -> (DataLoader, DataLoader):
