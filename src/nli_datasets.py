@@ -29,6 +29,10 @@ class NLIDatasets:
                                        max_length=self.max_length),
             batched=True,
             num_proc=thread)
+        
+        empty_keys = [k for k in loaded_dataset.keys() if len(loaded_dataset[k]) == 0]
+        [loaded_dataset.pop(k) for k in empty_keys]
+        
         loaded_dataset.set_format(type='torch', columns=['input_ids', 'token_type_ids', 'attention_mask', 'label'])
         return loaded_dataset
     
