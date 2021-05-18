@@ -4,7 +4,6 @@ import math
 import ssl
 
 import torch
-from datasets import load_dataset, load_metric
 from tqdm import tqdm
 from transformers import AdamW, get_scheduler
 from transformers import XLNetForSequenceClassification, XLNetConfig, XLNetTokenizer
@@ -55,7 +54,6 @@ def get_optimizers(model: torch.nn.Module, lr: float, train_cycles: int, gradien
 
 
 def get_logger():
-    # set up logging to file
     log_format = '%(asctime)s - %(message)s'
     logging.basicConfig(filename='train_details.log', level=logging.INFO, format=log_format, datefmt='%H:%M:%S')
     console = logging.StreamHandler()
@@ -63,8 +61,7 @@ def get_logger():
     formatter = logging.Formatter(log_format)
     console.setFormatter(formatter)
     logging.getLogger().addHandler(console)
-    logger = logging.getLogger(__name__)
-    return logger
+    return logging.getLogger(__name__)
 
 
 def train(lr: float, train_batch_size: int, val_batch_size: int, gradient_accumulation_steps: int, val_step: int,
@@ -82,7 +79,7 @@ def train(lr: float, train_batch_size: int, val_batch_size: int, gradient_accumu
     train_loader = nli_dataset.get_train_dataloader(train_batch_size=train_batch_size)
     val_m_loader, val_mm_loader = nli_dataset.get_mnli_dev_dataloaders(val_batch_size=val_batch_size)
     
-    metric = load_metric("accuracy")
+    metric = nli_dataset.get_metric()
     train_loader_len = len(train_loader)
     optimizer, lr_scheduler = get_optimizers(model=model, lr=lr, train_cycles=train_loader_len,
                                              gradient_accumulation_steps=gradient_accumulation_steps)

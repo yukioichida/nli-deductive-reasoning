@@ -2,6 +2,11 @@ from datasets import load_dataset, load_metric, concatenate_datasets, Metric, Da
 from transformers import PreTrainedTokenizer
 from torch.utils.data import DataLoader
 
+# Disable tqdm from datasets
+from datasets.utils.logging import set_verbosity_error
+
+set_verbosity_error()
+
 
 class NLIDatasets:
     
