@@ -21,7 +21,7 @@ class NLIDatasets:
         return self.metric
     
     def _load_nli_datasets(self, dataset: Dataset, thread: int = 4) -> Dataset:
-        loaded_dataset = dataset.map(
+        loaded_dataset = dataset.filter(lambda x: x["label"] != -1).map(
             lambda row: self.tokenizer(row['premise'],
                                        row['hypothesis'],
                                        truncation=True,
@@ -39,6 +39,7 @@ class NLIDatasets:
         print(f"SNLI Train Set length: {len(train_snli_dataset)}")
         train_dataset = concatenate_datasets([train_mnli_dataset, train_snli_dataset])
         print(f"Total train length {len(train_dataset)}")
+        print(set(train_dataset['label']))
         return DataLoader(train_dataset, batch_size=train_batch_size)
     
     def get_mnli_dev_dataloaders(self, val_batch_size: int) -> (DataLoader, DataLoader):
