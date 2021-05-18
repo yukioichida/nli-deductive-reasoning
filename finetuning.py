@@ -7,13 +7,14 @@ import torch
 from tqdm import tqdm
 from transformers import AdamW, get_scheduler
 from transformers import XLNetForSequenceClassification, XLNetConfig, XLNetTokenizer
+from datasets.metric import Metric
 
 from src.nli_datasets import NLIDatasets
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
 
-def validate(model, val_dataloader, metric):
+def validate(model, val_dataloader, metric) -> Metric:
     model.eval()
     with torch.no_grad():
         for step, batch in enumerate(val_dataloader):
@@ -104,7 +105,7 @@ def train(lr: float, train_batch_size: int, val_batch_size: int, gradient_accumu
                 lr_scheduler.step()
                 optimizer.zero_grad()
             if (step + 1) % val_step == 0:
-                val_acc = validate(model, val_m_loader, metric)
+                val_acc = validate(model, val_m_loader, metric)['accuracy']
                 log.info(f"{epoch} - {step} - Val acc matched: {val_acc:.4f}")
 
 
