@@ -5,12 +5,12 @@ from torch.utils.data import DataLoader
 
 class NLIDatasets:
     
-    def __init__(self, tokenizer: PreTrainedTokenizer, max_length: int = 128, thread: int = 4):
+    def __init__(self, tokenizer: PreTrainedTokenizer, max_length: int = 128, threads: int = 4):
         self.metric = load_metric('accuracy')
         self.tokenizer = tokenizer
         self.max_length = max_length
-        self.mnli_dataset = self._load_nli_datasets(load_dataset('glue', 'mnli'), thread=thread).remove_columns('idx')
-        self.snli_dataset = self._load_nli_datasets(load_dataset('snli'), thread=thread)
+        self.mnli_dataset = self._load_nli_datasets(load_dataset('glue', 'mnli'), thread=threads).remove_columns('idx')
+        self.snli_dataset = self._load_nli_datasets(load_dataset('snli'), thread=threads)
     
     def get_metric(self) -> Metric:
         return self.metric

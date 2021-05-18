@@ -68,7 +68,7 @@ def get_logger():
 
 
 def train(lr: float, train_batch_size: int, val_batch_size: int, gradient_accumulation_steps: int, val_step: int,
-          epochs=int):
+          epochs: int, threads: int):
     model_name = "xlnet-base-cased"
     config = XLNetConfig.from_pretrained(model_name, num_labels=3)
     tokenizer = XLNetTokenizer.from_pretrained(model_name, config=config)
@@ -78,7 +78,7 @@ def train(lr: float, train_batch_size: int, val_batch_size: int, gradient_accumu
     
     log = get_logger()
     log.info('Loading dataset...')
-    nli_dataset = NLIDatasets(tokenizer=tokenizer)
+    nli_dataset = NLIDatasets(tokenizer=tokenizer, threads=threads)
     train_loader = nli_dataset.get_train_dataloader(train_batch_size=train_batch_size)
     val_m_loader, val_mm_loader = nli_dataset.get_mnli_dev_dataloaders(val_batch_size=val_batch_size)
     
@@ -119,6 +119,7 @@ if __name__ == '__main__':
     parser.add_argument('--gradient_accumulation_steps', type=int, default=16, help='Gradient Accumulation Steps')
     parser.add_argument('--val_step', type=int, default=2000, help='Number of train steps to do validation')
     parser.add_argument('--epochs', type=int, default=3, help='Train epochs')
+    parser.add_argument('--threads', type=int, default=4, help='Threads')
     
     args = parser.parse_args()
     train(lr=args.lr,
@@ -126,4 +127,5 @@ if __name__ == '__main__':
           val_batch_size=args.val_batch_size,
           gradient_accumulation_steps=args.gradient_accumulation_steps,
           val_step=args.val_step,
-          epochs=args.epochs)
+          epochs=args.epochs,
+          threads=args.threads)
