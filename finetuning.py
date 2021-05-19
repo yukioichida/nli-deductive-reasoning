@@ -65,15 +65,18 @@ def get_logger():
     return logging.getLogger(__name__)
 
 
-def train(lr: float, train_batch_size: int, val_batch_size: int, gradient_accumulation_steps: int, val_step: int,
-          epochs: int, threads: int):
-    model_name = "xlnet-base-cased"
+def load_transformer_model(model_name: str = "xlnet-base-cased"):
     config = XLNetConfig.from_pretrained(model_name, num_labels=3)
     tokenizer = XLNetTokenizer.from_pretrained(model_name, config=config)
     model = XLNetForSequenceClassification.from_pretrained(model_name, config=config)
     if torch.cuda.is_available():
         model = model.to('cuda')
-    
+    return model, tokenizer
+
+
+def train(lr: float, train_batch_size: int, val_batch_size: int, gradient_accumulation_steps: int, val_step: int,
+          epochs: int, threads: int):
+    model, tokenizer = load_transformer_model()
     log = get_logger()
     log.info('Loading dataset...')
     nli_dataset = NLIDatasets(tokenizer=tokenizer, threads=threads)
@@ -106,8 +109,12 @@ def train(lr: float, train_batch_size: int, val_batch_size: int, gradient_accumu
                 lr_scheduler.step()
                 optimizer.zero_grad()
             if (step + 1) % val_step == 0:
-                val_acc = validate(model, val_m_loader, metric)['accuracy']
-                log.info(f"{epoch} - {step} - Val acc matched: {val_acc:.4f}")
+                val_matched_acc = validate(model, val_m_loader, metric)['accuracy']
+                val_mismatched_acc = validate(model, val_mm_loader, metric)['accuracy']
+                val_acc = (val_matched_acc + val_mismatched_acc) / 2
+                log.info(f"{epoch} - {step} "
+                         f"- Val acc matched/mismatched: {val_matched_acc:.4f}/{val_mismatched_acc:.4f} "
+                         f"- Val acc avg: {val_acc:.4f}")
 
 
 if __name__ == '__main__':
@@ -117,7 +124,7 @@ if __name__ == '__main__':
     parser.add_argument('--val_batch_size', type=int, default=32, help='Validation batch size')
     parser.add_argument('--gradient_accumulation_steps', type=int, default=16, help='Gradient Accumulation Steps')
     parser.add_argument('--val_step', type=int, default=2000, help='Number of train steps to do validation')
-    parser.add_argument('--epochs', type=int, default=3, help='Train epochs')
+    parser.add_argument('--epochs', type=int, default=4, help='Train epochs')
     parser.add_argument('--threads', type=int, default=4, help='Threads')
     
     args = parser.parse_args()

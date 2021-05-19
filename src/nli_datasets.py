@@ -52,5 +52,5 @@ class NLIDatasets:
     
     def get_snli_dev_test_dataloaders(self, val_batch_size: int) -> (DataLoader, DataLoader):
         snli_val = self.snli_dataset['validation']
-        sni_test = self.snli_dataset['test']
-        return DataLoader(snli_val, batch_size=val_batch_size), DataLoader(sni_test, batch_size=val_batch_size)
+        snli_test = self.snli_dataset['test']
+        return DataLoader(snli_val, batch_size=val_batch_size), DataLoader(snli_test, batch_size=val_batch_size)
