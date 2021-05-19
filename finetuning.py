@@ -90,6 +90,7 @@ def train(lr: float, train_batch_size: int, val_batch_size: int, gradient_accumu
                                              gradient_accumulation_steps=gradient_accumulation_steps)
     
     # Train
+    best_val_acc = 0.86
     log.info("Train...")
     for epoch in range(epochs):
         for step, batch in tqdm(enumerate(train_loader), total=train_loader_len):
@@ -115,6 +116,9 @@ def train(lr: float, train_batch_size: int, val_batch_size: int, gradient_accumu
                 log.info(f"{epoch} - {step} "
                          f"- Val acc matched/mismatched: {val_matched_acc:.4f}/{val_mismatched_acc:.4f} "
                          f"- Val acc avg: {val_acc:.4f}")
+                if val_acc > best_val_acc:
+                    log.info(f"Saving model")
+                    model.save_pretrained(f'models/mnli-snli-model-{val_acc:.4f}.ckp')
 
 
 if __name__ == '__main__':
