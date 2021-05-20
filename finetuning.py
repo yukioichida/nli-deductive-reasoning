@@ -54,7 +54,7 @@ def get_optimizers(model: torch.nn.Module, lr: float, train_cycles: int, gradien
     return optimizer, lr_scheduler
 
 
-def get_logger():
+def setup_logger():
     log_format = '%(asctime)s - %(message)s'
     logging.basicConfig(filename='train_details.log', level=logging.INFO, format=log_format, datefmt='%H:%M:%S')
     console = logging.StreamHandler()
@@ -77,8 +77,7 @@ def load_transformer_model(model_name: str = "xlnet-base-cased"):
 def train(lr: float, train_batch_size: int, val_batch_size: int, gradient_accumulation_steps: int, val_step: int,
           epochs: int, threads: int):
     model, tokenizer = load_transformer_model()
-    log = get_logger()
-    log.info('Loading dataset...')
+    logging.getLogger().info('Loading dataset...')
     nli_dataset = NLIDatasets(tokenizer=tokenizer)
     
     train_loader = nli_dataset.get_train_dataloader(train_batch_size=train_batch_size, threads=threads)
@@ -91,7 +90,7 @@ def train(lr: float, train_batch_size: int, val_batch_size: int, gradient_accumu
     
     # Train
     best_val_acc = 0.86
-    log.info("Train...")
+    logging.getLogger().info("Train...")
     for epoch in range(epochs):
         for step, batch in tqdm(enumerate(train_loader), total=train_loader_len):
             model.train()
@@ -113,11 +112,12 @@ def train(lr: float, train_batch_size: int, val_batch_size: int, gradient_accumu
                 val_matched_acc = validate(model, val_m_loader, metric)['accuracy']
                 val_mismatched_acc = validate(model, val_mm_loader, metric)['accuracy']
                 val_acc = (val_matched_acc + val_mismatched_acc) / 2
-                log.info(f"{epoch} - {step} "
-                         f"- Val acc matched/mismatched: {val_matched_acc:.4f}/{val_mismatched_acc:.4f} "
-                         f"- Val acc avg: {val_acc:.4f}")
+                logging.getLogger().info(f"{epoch} - {step} "
+                                         f"- Val acc matched/mismatched: "
+                                         f"{val_matched_acc:.4f}/{val_mismatched_acc:.4f} "
+                                         f"- Val acc avg: {val_acc:.4f}")
                 if val_acc > best_val_acc:
-                    log.info(f"Saving model")
+                    logging.getLogger().info(f"Saving model")
                     model.save_pretrained(f'models/mnli-snli-model-{val_acc:.4f}.ckp')
 
 
@@ -132,8 +132,8 @@ if __name__ == '__main__':
     parser.add_argument('--threads', type=int, default=4, help='Threads')
     
     args = parser.parse_args()
-    print(args)
-    
+    setup_logger()
+    logging.getLogger().info(args)
     train(lr=args.lr,
           train_batch_size=args.train_batch_size,
           val_batch_size=args.val_batch_size,
