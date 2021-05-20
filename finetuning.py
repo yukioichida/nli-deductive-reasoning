@@ -3,6 +3,7 @@ import logging
 import math
 import ssl
 
+import numpy as np
 import torch
 from tqdm import tqdm
 from transformers import AdamW, get_scheduler
@@ -121,6 +122,13 @@ def train(lr: float, train_batch_size: int, val_batch_size: int, gradient_accumu
                     model.save_pretrained(f'models/mnli-snli-model-{val_acc:.4f}.ckp')
 
 
+def set_seed(seed):
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if args.n_gpu > 0:
+        torch.cuda.manual_seed_all(seed)
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Finetune NLI Model')
     parser.add_argument('--lr', type=float, default=3e-5, help='Learning rate')
@@ -130,9 +138,11 @@ if __name__ == '__main__':
     parser.add_argument('--val_step', type=int, default=2000, help='Number of train steps to do validation')
     parser.add_argument('--epochs', type=int, default=4, help='Train epochs')
     parser.add_argument('--threads', type=int, default=4, help='Threads')
+    parser.add_argument('--seed', type=int, default=42, help='SEED')
     
     args = parser.parse_args()
     setup_logger()
+    set_seed(args.seed)
     logging.getLogger().info(args)
     train(lr=args.lr,
           train_batch_size=args.train_batch_size,
