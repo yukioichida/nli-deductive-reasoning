@@ -125,8 +125,6 @@ def train(lr: float, train_batch_size: int, val_batch_size: int, gradient_accumu
 def set_seed(seed):
     np.random.seed(seed)
     torch.manual_seed(seed)
-    if args.n_gpu > 0:
-        torch.cuda.manual_seed_all(seed)
 
 
 if __name__ == '__main__':
