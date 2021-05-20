@@ -43,7 +43,7 @@ class NLIDatasets:
     
     def get_mnli_dev_dataloaders(self, val_batch_size: int, threads: int = 4) -> (DataLoader, DataLoader):
         val_m, val_mm = load_dataset('glue', 'mnli',
-                                     split=['validation_matched', 'validation_mismatched']).remove_columns('idx')
-        val_m = self._load_nli_datasets(val_m, threads=threads)
-        val_mm = self._load_nli_datasets(val_mm, threads=threads)
+                                     split=['validation_matched', 'validation_mismatched'])
+        val_m = self._load_nli_datasets(val_m.remove_columns('idx'), threads=threads)
+        val_mm = self._load_nli_datasets(val_mm.remove_columns('idx'), threads=threads)
         return DataLoader(val_m, batch_size=val_batch_size), DataLoader(val_mm, batch_size=val_batch_size)
