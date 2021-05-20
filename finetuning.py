@@ -132,6 +132,8 @@ if __name__ == '__main__':
     parser.add_argument('--threads', type=int, default=4, help='Threads')
     
     args = parser.parse_args()
+    print(args)
+    
     train(lr=args.lr,
           train_batch_size=args.train_batch_size,
           val_batch_size=args.val_batch_size,
