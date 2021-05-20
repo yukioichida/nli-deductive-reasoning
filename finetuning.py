@@ -79,7 +79,7 @@ def train(lr: float, train_batch_size: int, val_batch_size: int, gradient_accumu
     model, tokenizer = load_transformer_model()
     log = get_logger()
     log.info('Loading dataset...')
-    nli_dataset = NLIDatasets(tokenizer=tokenizer, threads=threads)
+    nli_dataset = NLIDatasets(tokenizer=tokenizer)
     
     train_loader = nli_dataset.get_train_dataloader(train_batch_size=train_batch_size, threads=threads)
     val_m_loader, val_mm_loader = nli_dataset.get_mnli_dev_dataloaders(val_batch_size=val_batch_size, threads=threads)
