@@ -66,9 +66,10 @@ def setup_logger():
     return logging.getLogger(__name__)
 
 
-def load_transformer_model(model_name: str = "xlnet-base-cased"):
-    config = XLNetConfig.from_pretrained(model_name, num_labels=3)
-    tokenizer = XLNetTokenizer.from_pretrained(model_name, config=config)
+def load_transformer_model(model_name: str = "xlnet-base-cased", base_model_name: str = "xlnet-base-cased"):
+    config = XLNetConfig.from_pretrained(base_model_name, num_labels=3)
+    tokenizer = XLNetTokenizer.from_pretrained(base_model_name, config=config)
+    
     model = XLNetForSequenceClassification.from_pretrained(model_name, config=config)
     if torch.cuda.is_available():
         model = model.to('cuda')
