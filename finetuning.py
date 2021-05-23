@@ -92,7 +92,7 @@ def train(lr: float, train_batch_size: int, val_batch_size: int, gradient_accumu
                                              gradient_accumulation_steps=gradient_accumulation_steps)
     
     # Train
-    best_val_acc = 0.86
+    best_val_acc = 0.864
     logging.getLogger().info("Train...")
     for epoch in range(epochs):
         for step, batch in tqdm(enumerate(train_loader), total=train_loader_len):
