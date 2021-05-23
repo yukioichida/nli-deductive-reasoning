@@ -17,8 +17,9 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 def validate(model, val_dataloader, metric) -> Metric:
     model.eval()
+    len_dataloader = len(val_dataloader)
     with torch.no_grad():
-        for step, batch in enumerate(val_dataloader):
+        for step, batch in tqdm(enumerate(val_dataloader), total=len_dataloader):
             if torch.cuda.is_available():
                 batch = {key: tensor.to('cuda') for key, tensor in batch.items()}
             outputs = model(attention_mask=batch['attention_mask'],

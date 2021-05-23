@@ -47,3 +47,8 @@ class NLIDatasets:
         val_m = self._load_nli_datasets(val_m.remove_columns('idx'), threads=threads)
         val_mm = self._load_nli_datasets(val_mm.remove_columns('idx'), threads=threads)
         return DataLoader(val_m, batch_size=val_batch_size), DataLoader(val_mm, batch_size=val_batch_size)
+    
+    def get_snli_test_dataloader(self, batch_size: int, threads: int = 4) -> DataLoader:
+        test_snli_set = load_dataset('snli', split='test')
+        test_snli_loader = self._load_nli_datasets(test_snli_set, threads=threads)
+        return DataLoader(test_snli_loader, batch_size=batch_size)

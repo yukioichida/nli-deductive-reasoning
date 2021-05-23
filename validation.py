@@ -11,18 +11,26 @@ def setup_logger():
 
 
 def validation(pretrained_model: str, val_batch_size: int, n_threads: int):
+    log = logging.getLogger()
     model, tokenizer = load_transformer_model(model_name=pretrained_model)
     
     nli_dataset = NLIDatasets(tokenizer=tokenizer)
     metric = nli_dataset.get_metric()
     
+    log.info(f"Loading MNLI  validation datasets (matched/mismatched)")
     val_m_loader, val_mm_loader = nli_dataset.get_mnli_dev_dataloaders(val_batch_size=val_batch_size, threads=n_threads)
-    val_matched_acc = validate(model, val_m_loader, metric)['accuracy']
+    log.info(f"Loading SNLI test set")
+    test_snli_loader = nli_dataset.get_snli_test_dataloader(batch_size=val_batch_size, threads=n_threads)
     
+    log.info("Validating on MNLI sets")
+    val_matched_acc = validate(model, val_m_loader, metric)['accuracy']
     val_mismatched_acc = validate(model, val_mm_loader, metric)['accuracy']
     val_acc = (val_matched_acc + val_mismatched_acc) / 2
-    logging.getLogger().info(f"Val acc matched/mismatched: {val_matched_acc:.4f}/{val_mismatched_acc:.4f} "
-                             f"- Val acc avg: {val_acc:.4f}")
+    log.info(f"Val acc matched/mismatched: {val_matched_acc:.4f}/{val_mismatched_acc:.4f} - Val acc avg: {val_acc:.4f}")
+    
+    log.info("Validating on SNLI sets")
+    test_snli_acc = validate(model, test_snli_loader, metric)['accuracy']
+    log.info(f"SNLI test set acc: {test_snli_acc: .4f}")
 
 
 if __name__ == '__main__':
