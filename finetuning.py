@@ -7,7 +7,7 @@ import numpy as np
 import torch
 from tqdm import tqdm
 from transformers import AdamW, get_scheduler
-from transformers import XLNetForSequenceClassification, XLNetConfig, XLNetTokenizer
+from transformers import XLNetForSequenceClassification, XLNetConfig, XLNetTokenizer, XLNetTokenizerFast
 from datasets.metric import Metric
 
 from src.nli_datasets import NLIDatasets
@@ -69,7 +69,7 @@ def setup_logger():
 
 def load_transformer_model(model_name: str = "xlnet-base-cased", base_model_name: str = "xlnet-base-cased"):
     config = XLNetConfig.from_pretrained(base_model_name, num_labels=3)
-    tokenizer = XLNetTokenizer.from_pretrained(base_model_name, config=config)
+    tokenizer = XLNetTokenizerFast.from_pretrained(base_model_name, config=config, do_lower_case=True)
     
     model = XLNetForSequenceClassification.from_pretrained(model_name, config=config)
     if torch.cuda.is_available():
