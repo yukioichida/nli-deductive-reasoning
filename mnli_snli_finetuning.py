@@ -39,7 +39,10 @@ def set_seed(seed):
 
 
 def main(args):
+    logging.getLogger().info("Load model and tokenizer")
     model, tokenizer = load_transformer_model()
+    
+    logging.getLogger().info("Loading datasets...")
     nli_dataset = DefaultNLIDataset(tokenizer=tokenizer)
     train_dataloader = nli_dataset.get_train_dataloader(batch_size=args.train_batch_size, threads=args.threads)
     val_matched_dataloader, val_mismatched_dataloader = nli_dataset.get_mnli_dev_dataloaders(
@@ -56,6 +59,7 @@ def main(args):
                                     val_mismatched_dataloader=val_mismatched_dataloader,
                                     val_snli_dataloader=val_snli_dataloader)
     
+    logging.getLogger().info("Train")
     finetuning.train(model, train_dataloader)
 
 
