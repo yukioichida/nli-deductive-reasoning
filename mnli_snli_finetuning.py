@@ -47,7 +47,7 @@ def main(args):
     val_matched_dataloader, val_mismatched_dataloader = nli_dataset.get_mnli_dev_dataloaders(
         batch_size=args.val_batch_size,
         threads=args.threads)
-    val_snli_dataloader = nli_dataset.get_snli_val_dataloader(batch_size=args.train_batch_size, threads=args.threads)
+    val_snli_dataloader = nli_dataset.get_snli_val_dataloader(batch_size=args.val_batch_size, threads=args.threads)
     
     finetuning = MNLISNLIFinetuning(output_model_dir="snli_mnli_models",
                                     lr=args.lr,
