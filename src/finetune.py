@@ -56,7 +56,6 @@ class Finetuning:
         optimizer, lr_scheduler = self.get_optimizers(model=model, train_cycles=train_loader_len)
         # Train
         best_model_score = initial_best_score
-        logging.getLogger().info("Train...")
         for epoch in range(self.epochs):
             for step, batch in tqdm(enumerate(train_data_loader), total=train_loader_len):
                 model.train()
