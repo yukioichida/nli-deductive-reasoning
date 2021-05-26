@@ -65,7 +65,7 @@ if __name__ == '__main__':
     parser.add_argument('--train_batch_size', type=int, default=8, help='Train batch size')
     parser.add_argument('--val_batch_size', type=int, default=32, help='Validation batch size')
     parser.add_argument('--gradient_accumulation_steps', type=int, default=16, help='Gradient Accumulation Steps')
-    parser.add_argument('--val_step', type=int, default=2000, help='Number of train steps to do validation')
+    parser.add_argument('--val_steps', type=int, default=2000, help='Number of train steps to do validation')
     parser.add_argument('--epochs', type=int, default=4, help='Train epochs')
     parser.add_argument('--threads', type=int, default=4, help='Threads')
     parser.add_argument('--seed', type=int, default=42, help='SEED')
