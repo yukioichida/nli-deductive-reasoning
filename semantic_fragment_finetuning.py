@@ -7,7 +7,7 @@ import torch
 from transformers import XLNetForSequenceClassification, XLNetConfig, XLNetTokenizerFast
 
 from src.finetune import MNLISNLIFinetuning
-from src.nli_datasets import DefaultNLIDataset
+from src.nli_datasets import SemanticFragmentDataset
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -36,15 +36,14 @@ def set_seed(seed):
     np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
-    torch.set_deterministic(True)
-    torch.backends.cudnn.deterministic = True
+
 
 def main(args):
     logging.getLogger().info("Load model and tokenizer")
     model, tokenizer = load_transformer_model()
     
     logging.getLogger().info("Loading datasets...")
-    nli_dataset = DefaultNLIDataset(tokenizer=tokenizer)
+    nli_dataset = SemanticFragmentDataset(tokenizer=tokenizer)
     train_dataloader = nli_dataset.get_train_dataloader(batch_size=args.train_batch_size, threads=args.threads)
     val_matched_dataloader, val_mismatched_dataloader = nli_dataset.get_mnli_dev_dataloaders(
         batch_size=args.val_batch_size,
@@ -74,6 +73,8 @@ if __name__ == '__main__':
     parser.add_argument('--epochs', type=int, default=4, help='Train epochs')
     parser.add_argument('--threads', type=int, default=4, help='Threads')
     parser.add_argument('--seed', type=int, default=42, help='SEED')
+    parser.add_argument('--data_dir', type=str, help='Semantic Fragment dataset directory')
+    parser.add_argument('--nli_base_model', type=str, help='NLI pretrained base model')
     
     args = parser.parse_args()
     setup_logger()
