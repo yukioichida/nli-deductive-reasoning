@@ -1,5 +1,5 @@
 import argparse
-from finetuning import load_transformer_model, validate, set_seed
+from mnli_snli_finetuning import load_transformer_model, validate, set_seed
 import logging
 
 from src.nli_datasets import NLIDatasets

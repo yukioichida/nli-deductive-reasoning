@@ -1,4 +1,5 @@
 *.log
+train_details.log
 
 # Created by https://www.toptal.com/developers/gitignore/api/jupyternotebooks,python,pycharm+all
 # Edit at https://www.toptal.com/developers/gitignore?templates=jupyternotebooks,python,pycharm+all
