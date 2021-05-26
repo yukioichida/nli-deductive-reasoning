@@ -1,59 +1,15 @@
 import argparse
 import logging
-import math
 import ssl
 
 import numpy as np
 import torch
-from tqdm import tqdm
-from transformers import AdamW, get_scheduler
-from transformers import XLNetForSequenceClassification, XLNetConfig, XLNetTokenizer, XLNetTokenizerFast
-from datasets.metric import Metric
+from transformers import XLNetForSequenceClassification, XLNetConfig, XLNetTokenizerFast
 
-from src.nli_datasets import NLIDatasets
+from src.finetune import MNLISNLIFinetuning
+from src.nli_datasets import DefaultNLIDataset
 
 ssl._create_default_https_context = ssl._create_unverified_context
-
-
-def validate(model, val_dataloader, metric) -> Metric:
-    model.eval()
-    len_dataloader = len(val_dataloader)
-    with torch.no_grad():
-        for step, batch in tqdm(enumerate(val_dataloader), total=len_dataloader):
-            if torch.cuda.is_available():
-                batch = {key: tensor.to('cuda') for key, tensor in batch.items()}
-            outputs = model(attention_mask=batch['attention_mask'],
-                            input_ids=batch['input_ids'],
-                            token_type_ids=batch['token_type_ids'],
-                            labels=batch['label'])
-            predictions = outputs.logits.argmax(dim=-1)
-            metric.add_batch(predictions=predictions, references=batch["label"])
-        return metric.compute()
-
-
-def get_optimizers(model: torch.nn.Module, lr: float, train_cycles: int, gradient_accumulation_steps: int):
-    num_update_steps_per_epoch = math.ceil(train_cycles / gradient_accumulation_steps)
-    max_train_steps = args.epochs * num_update_steps_per_epoch
-    # Optimizer -  Split weights in two groups, one with weight decay and the other not.
-    no_decay = ["bias", "LayerNorm.weight"]
-    optimizer_grouped_parameters = [
-        {
-            "params": [p for n, p in model.named_parameters() if not any(nd in n for nd in no_decay)],
-            "weight_decay": 0.0,
-        },
-        {
-            "params": [p for n, p in model.named_parameters() if any(nd in n for nd in no_decay)],
-            "weight_decay": 0.0,
-        },
-    ]
-    optimizer = AdamW(optimizer_grouped_parameters, lr=lr)
-    lr_scheduler = get_scheduler(
-        name='linear',
-        optimizer=optimizer,
-        num_warmup_steps=0,
-        num_training_steps=max_train_steps,
-    )
-    return optimizer, lr_scheduler
 
 
 def setup_logger():
@@ -70,63 +26,37 @@ def setup_logger():
 def load_transformer_model(model_name: str = "xlnet-base-cased", base_model_name: str = "xlnet-base-cased"):
     config = XLNetConfig.from_pretrained(base_model_name, num_labels=3)
     tokenizer = XLNetTokenizerFast.from_pretrained(base_model_name, config=config, do_lower_case=True)
-    
     model = XLNetForSequenceClassification.from_pretrained(model_name, config=config)
     if torch.cuda.is_available():
         model = model.to('cuda')
     return model, tokenizer
 
 
-def train(lr: float, train_batch_size: int, val_batch_size: int, gradient_accumulation_steps: int, val_step: int,
-          epochs: int, threads: int):
-    model, tokenizer = load_transformer_model()
-    logging.getLogger().info('Loading dataset...')
-    nli_dataset = NLIDatasets(tokenizer=tokenizer)
-    
-    train_loader = nli_dataset.get_train_dataloader(train_batch_size=train_batch_size, threads=threads)
-    val_m_loader, val_mm_loader = nli_dataset.get_mnli_dev_dataloaders(val_batch_size=val_batch_size, threads=threads)
-    
-    metric = nli_dataset.get_metric()
-    train_loader_len = len(train_loader)
-    optimizer, lr_scheduler = get_optimizers(model=model, lr=lr, train_cycles=train_loader_len,
-                                             gradient_accumulation_steps=gradient_accumulation_steps)
-    
-    # Train
-    best_val_acc = 0.864
-    logging.getLogger().info("Train...")
-    for epoch in range(epochs):
-        for step, batch in tqdm(enumerate(train_loader), total=train_loader_len):
-            model.train()
-            if torch.cuda.is_available():
-                batch = {key: tensor.to('cuda') for key, tensor in batch.items()}
-            
-            outputs = model(attention_mask=batch['attention_mask'],
-                            input_ids=batch['input_ids'],
-                            token_type_ids=batch['token_type_ids'],
-                            labels=batch['label'])
-            loss = outputs.loss / gradient_accumulation_steps
-            loss.backward()
-            if (step + 1) % gradient_accumulation_steps == 0 or step == train_loader_len - 1:
-                # Propagation
-                optimizer.step()
-                lr_scheduler.step()
-                optimizer.zero_grad()
-            if (step + 1) % val_step == 0:
-                val_matched_acc = validate(model, val_m_loader, metric)['accuracy']
-                val_mismatched_acc = validate(model, val_mm_loader, metric)['accuracy']
-                val_acc = (val_matched_acc + val_mismatched_acc) / 2
-                logging.getLogger().info(f"{epoch} - {step} "
-                                         f"- Val acc matched/mismatched: "
-                                         f"{val_matched_acc:.4f}/{val_mismatched_acc:.4f} "
-                                         f"- Val acc avg: {val_acc:.4f}")
-                if val_acc > best_val_acc:
-                    logging.getLogger().info(f"Saving model")
-                    model.save_pretrained(f'models/mnli-snli-model-{val_acc:.4f}.ckp')
-
-
 def set_seed(seed):
     np.random.seed(seed)
     torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+
+
+def main(args):
+    model, tokenizer = load_transformer_model()
+    nli_dataset = DefaultNLIDataset(tokenizer=tokenizer)
+    train_dataloader = nli_dataset.get_train_dataloader(batch_size=args.train_batch_size, threads=args.threads)
+    val_matched_dataloader, val_mismatched_dataloader = nli_dataset.get_mnli_dev_dataloaders(
+        batch_size=args.val_batch_size,
+        threads=args.threads)
+    val_snli_dataloader = nli_dataset.get_snli_val_dataloader(batch_size=args.train_batch_size, threads=args.threads)
+    
+    finetuning = MNLISNLIFinetuning(output_model_dir="snli_mnli_models",
+                                    lr=args.lr,
+                                    epochs=args.epochs,
+                                    gradient_accumulation_steps=args.gradient_accumulation_steps,
+                                    val_steps=args.val_steps,
+                                    val_matched_dataloader=val_matched_dataloader,
+                                    val_mismatched_dataloader=val_mismatched_dataloader,
+                                    val_snli_dataloader=val_snli_dataloader)
+    
+    finetuning.train(model, train_dataloader)
 
 
 if __name__ == '__main__':
@@ -144,10 +74,4 @@ if __name__ == '__main__':
     setup_logger()
     set_seed(args.seed)
     logging.getLogger().info(args)
-    train(lr=args.lr,
-          train_batch_size=args.train_batch_size,
-          val_batch_size=args.val_batch_size,
-          gradient_accumulation_steps=args.gradient_accumulation_steps,
-          val_step=args.val_step,
-          epochs=args.epochs,
-          threads=args.threads)
+    main(args)

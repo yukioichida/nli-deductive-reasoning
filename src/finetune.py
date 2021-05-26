@@ -4,6 +4,7 @@ import logging
 import math
 
 import torch
+from torch.nn import Module
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from transformers import AdamW, get_scheduler
@@ -15,7 +16,6 @@ from datasets import Metric, load_metric
 class Finetuning:
     
     def __init__(self, output_model_dir: str, **train_args):
-        self.model, self.tokenizer = self.load_transformer_model()
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.output_model_dir = output_model_dir
         self.lr = train_args['lr']
@@ -47,20 +47,11 @@ class Finetuning:
         )
         return optimizer, lr_scheduler
     
-    def load_transformer_model(self, model_name: str = "xlnet-base-cased", base_model_name: str = "xlnet-base-cased"):
-        config = XLNetConfig.from_pretrained(base_model_name, num_labels=3)
-        tokenizer = XLNetTokenizerFast.from_pretrained(base_model_name, config=config, do_lower_case=True)
-        
-        model = XLNetForSequenceClassification.from_pretrained(model_name, config=config)
-        model = model.to(self.device)
-        return model, tokenizer
-    
     @abc.abstractmethod
-    def compute_model_score(self, model: torch.nn.Module, step: int, epoch: int) -> float:
+    def compute_model_score(self, model: Module, step: int, epoch: int) -> float:
         pass
     
-    def train(self, train_data_loader: DataLoader, initial_best_score: float = 0.866):
-        model, tokenizer = self.load_transformer_model()
+    def train(self, model: Module, train_data_loader: DataLoader, initial_best_score: float = 0.866):
         train_loader_len = len(train_data_loader)
         optimizer, lr_scheduler = self.get_optimizers(model=model, train_cycles=train_loader_len)
         # Train
@@ -89,7 +80,7 @@ class Finetuning:
                         model.save_pretrained(f'{self.output_model_dir}/trained-model-{model_score:.4f}.ckp')
                         best_model_score = model_score
     
-    def validate(self, model, val_dataloader, metric) -> Metric:
+    def validate(self, model: Module, val_dataloader: DataLoader, metric: Metric) -> Metric:
         model.eval()
         len_dataloader = len(val_dataloader)
         with torch.no_grad():
@@ -106,21 +97,23 @@ class Finetuning:
 
 class MNLISNLIFinetuning(Finetuning):
     
-    def __init__(self, val_m_dataloader: DataLoader, val_mis_dataloader: DataLoader, val_snli_dataloader: DataLoader,
+    def __init__(self,
+                 val_matched_dataloader: DataLoader,
+                 val_mismatched_dataloader: DataLoader,
+                 val_snli_dataloader: DataLoader,
                  **kwargs):
         super(MNLISNLIFinetuning, self).__init__(**kwargs)
-        self.val_m_dataloader = val_m_dataloader
-        self.val_mis_dataloader = val_mis_dataloader
+        self.val_matched_dataloader = val_matched_dataloader
+        self.val_mismatched_dataloader = val_mismatched_dataloader
         self.val_snli_dataloader = val_snli_dataloader
     
     def compute_model_score(self, model: torch.nn.Module, step: int, epoch: int) -> float:
         metric = load_metric('accuracy')
-        val_matched_acc = self.validate(model, self.val_m_dataloader, metric)['accuracy']
-        val_mismatched_acc = self.validate(model, self.val_mis_dataloader, metric)['accuracy']
+        val_matched_acc = self.validate(model, self.val_matched_dataloader, metric)['accuracy']
+        val_mismatched_acc = self.validate(model, self.val_mismatched_dataloader, metric)['accuracy']
         val_snli_acc = self.validate(model, self.val_snli_dataloader, metric)['accuracy']
         val_acc = (val_matched_acc + val_mismatched_acc + val_snli_acc) / 3
-        logging.getLogger().info(f"{epoch} - {step} "
-                                 f"- Val acc matched/mismatched/SNLI dev: "
+        logging.getLogger().info(f"{epoch} - {step} - Val acc matched/mismatched/SNLI dev: "
                                  f"{val_matched_acc:.4f}/{val_mismatched_acc:.4f}/{val_snli_acc:.4f}"
                                  f"- Val acc avg: {val_acc:.4f}")
         return val_acc

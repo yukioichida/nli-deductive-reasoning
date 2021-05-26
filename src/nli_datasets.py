@@ -33,26 +33,30 @@ class NLIDataset:
 
 class DefaultNLIDataset(NLIDataset):
     
-    def get_train_dataloader(self, train_batch_size: int, threads: int = 4) -> DataLoader:
+    def get_train_dataloader(self, batch_size: int, threads: int = 4) -> DataLoader:
         train_mnli_dataset = load_dataset('glue', 'mnli', split='train').remove_columns('idx')
         train_mnli_dataset = self._load_nli_datasets(train_mnli_dataset, threads=threads)
         train_snli_dataset = self._load_nli_datasets(load_dataset('snli', split='train'), threads=threads)
         train_dataset = concatenate_datasets([train_mnli_dataset, train_snli_dataset])
-        print(
-            f"MNLI/SNLI Train samples: {len(train_mnli_dataset)}/{len(train_snli_dataset)} - Total: {len(train_dataset)}")
-        return DataLoader(train_dataset, batch_size=train_batch_size)
+        print(f"MNLI/SNLI Train samples: {len(train_mnli_dataset)}/{len(train_snli_dataset)} "
+              f"- Total: {len(train_dataset)}")
+        return DataLoader(train_dataset, batch_size=batch_size)
     
-    def get_mnli_dev_dataloaders(self, val_batch_size: int, threads: int = 4) -> (DataLoader, DataLoader):
-        val_m, val_mm = load_dataset('glue', 'mnli',
-                                     split=['validation_matched', 'validation_mismatched'])
+    def get_mnli_dev_dataloaders(self, batch_size: int, threads: int = 4) -> (DataLoader, DataLoader):
+        val_m, val_mm = load_dataset('glue', 'mnli', split=['validation_matched', 'validation_mismatched'])
         val_m = self._load_nli_datasets(val_m.remove_columns('idx'), threads=threads)
         val_mm = self._load_nli_datasets(val_mm.remove_columns('idx'), threads=threads)
-        return DataLoader(val_m, batch_size=val_batch_size), DataLoader(val_mm, batch_size=val_batch_size)
+        return DataLoader(val_m, batch_size=batch_size), DataLoader(val_mm, batch_size=batch_size)
     
     def get_snli_test_dataloader(self, batch_size: int, threads: int = 4) -> DataLoader:
         test_snli_set = load_dataset('snli', split='test')
-        test_snli_loader = self._load_nli_datasets(test_snli_set, threads=threads)
-        return DataLoader(test_snli_loader, batch_size=batch_size)
+        test_snli_set = self._load_nli_datasets(test_snli_set, threads=threads)
+        return DataLoader(test_snli_set, batch_size=batch_size)
+    
+    def get_snli_val_dataloader(self, batch_size: int, threads: int = 4) -> DataLoader:
+        val_snli_set = load_dataset('snli', split='validation')
+        val_snli_set = self._load_nli_datasets(val_snli_set, threads=threads)
+        return DataLoader(val_snli_set, batch_size=batch_size)
 
 
 class SemanticFragmentDataset(NLIDataset):
