@@ -36,7 +36,6 @@ def set_seed(seed):
     np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
-    torch.set_deterministic(True)
 
 def main(args):
     logging.getLogger().info("Load model and tokenizer")
