@@ -9,7 +9,7 @@ from transformers import XLNetForSequenceClassification, XLNetConfig, XLNetToken
 from datasets import concatenate_datasets
 
 from src.finetune import SemanticFragmentsFinetuning
-from src.nli_datasets import SemanticFragmentDataset
+from src.nli_datasets import SemanticFragmentDataset, DefaultNLIDataset
 
 from datasets.utils.logging import set_verbosity_error
 
@@ -56,10 +56,18 @@ def main(args):
     model, tokenizer = load_transformer_model(model_name=args.nli_base_model)
     
     logging.getLogger("finetuning").info("Loading datasets...")
+    mnli_dataset = DefaultNLIDataset(tokenizer=tokenizer)
+    matched_dataloader, mismatched_dataloader = mnli_dataset.get_mnli_dev_dataloaders(batch_size=args.val_batch_size,
+                                                                                      threads=args.threads)
     nli_dataset = SemanticFragmentDataset(tokenizer=tokenizer)
     
-    semantic_fragments = ['quantifier', 'negation', 'monotonicity_simple', 'monotonicity_hard',
-                          'counting', 'conditional', 'comparative', 'boolean']
+    logical_fragments = ['quantifier', 'negation', 'counting', 'conditional', 'comparative', 'boolean']
+    monotonicity_fragments = ['monotonicity_simple', 'monotonicity_hard']
+    if args.only_logic:
+        semantic_fragments = logical_fragments
+    else:
+        semantic_fragments = logical_fragments + monotonicity_fragments
+    
     all_fragments_datasets = []
     all_validation_sets = {}
     for fragment in semantic_fragments:
@@ -69,6 +77,9 @@ def main(args):
         val_file = f"{args.data_dir}/{fragment}/train/challenge_dev.tsv"
         val_dataset = nli_dataset.get_fragment_dataset(val_file, threads=args.threads)
         all_validation_sets[fragment] = DataLoader(val_dataset, batch_size=args.val_batch_size)
+    
+    all_validation_sets['val_mnli_matched'] = matched_dataloader
+    all_validation_sets['val_mnli_mismatched'] = mismatched_dataloader
     
     train_dataset = concatenate_datasets(all_fragments_datasets)
     train_dataloader = DataLoader(train_dataset, batch_size=args.train_batch_size)
@@ -94,6 +105,7 @@ if __name__ == '__main__':
     parser.add_argument('--seed', type=int, default=42, help='SEED')
     parser.add_argument('--data_dir', type=str, help='Semantic Fragment dataset directory', required=True)
     parser.add_argument('--nli_base_model', type=str, help='NLI pretrained base model', required=True)
+    parser.add_argument('--only_logic', action='store_true', type=bool, help='Use only logic fragments')
     
     args = parser.parse_args()
     setup_logger()
