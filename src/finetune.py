@@ -130,7 +130,7 @@ class SemanticFragmentsFinetuning(Finetuning):
         len = 0
         summed_acc = 0
         for fragment, val_dataloader in self.val_dataloaders.items():
-            fragment_val_acc = self.validate(model, val_dataloader, metric)
+            fragment_val_acc = self.validate(model, val_dataloader, metric)['accuracy']
             logging.getLogger().info(f"{epoch} - {step} - Val acc {fragment}: {fragment_val_acc:.4f}")
             len += 1
             summed_acc += fragment_val_acc
