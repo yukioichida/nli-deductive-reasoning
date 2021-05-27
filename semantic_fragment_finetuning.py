@@ -23,8 +23,9 @@ def setup_logger():
     formatter = logging.Formatter(log_format)
     console.setFormatter(formatter)
     logging.getLogger().addHandler(console)
-    logging.getLogger("datasets").setLevel(logging.CRITICAL)
-    return logging.getLogger()
+    dataset_logger = logging.getLogger("datasets")
+    dataset_logger.setLevel(logging.CRITICAL)
+    dataset_logger.disabled = True
 
 
 def load_transformer_model(model_name: str = "xlnet-base-cased", base_model_name: str = "xlnet-base-cased"):
