@@ -105,7 +105,7 @@ if __name__ == '__main__':
     parser.add_argument('--seed', type=int, default=42, help='SEED')
     parser.add_argument('--data_dir', type=str, help='Semantic Fragment dataset directory', required=True)
     parser.add_argument('--nli_base_model', type=str, help='NLI pretrained base model', required=True)
-    parser.add_argument('--only_logic', action='store_true', type=bool, help='Use only logic fragments')
+    parser.add_argument('--only_logic', action='store_true', default=False, help='Use only logic fragments')
     
     args = parser.parse_args()
     setup_logger()
