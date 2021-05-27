@@ -60,7 +60,7 @@ def main(args):
                                     val_snli_dataloader=val_snli_dataloader)
     
     logging.getLogger().info("Train")
-    finetuning.train(model, train_dataloader)
+    finetuning.train(model, train_dataloader, initial_best_score=0.88)
 
 
 if __name__ == '__main__':

@@ -42,7 +42,7 @@ def set_seed(seed):
 
 def main(args):
     logging.getLogger().info("Load model and tokenizer")
-    model, tokenizer = load_transformer_model()
+    model, tokenizer = load_transformer_model(model_name=args.nli_base_model)
     
     logging.getLogger().info("Loading datasets...")
     nli_dataset = SemanticFragmentDataset(tokenizer=tokenizer)
@@ -67,7 +67,6 @@ def main(args):
                                              gradient_accumulation_steps=args.gradient_accumulation_steps,
                                              val_steps=args.val_steps,
                                              val_dataloaders=all_validation_sets)
-    
     logging.getLogger().info("Train - Semantic Fragments")
     finetuning.train(model, train_dataloader)
 
@@ -82,8 +81,8 @@ if __name__ == '__main__':
     parser.add_argument('--epochs', type=int, default=4, help='Train epochs')
     parser.add_argument('--threads', type=int, default=4, help='Threads')
     parser.add_argument('--seed', type=int, default=42, help='SEED')
-    parser.add_argument('--data_dir', type=str, help='Semantic Fragment dataset directory')
-    parser.add_argument('--nli_base_model', type=str, help='NLI pretrained base model')
+    parser.add_argument('--data_dir', type=str, help='Semantic Fragment dataset directory', required=True)
+    parser.add_argument('--nli_base_model', type=str, help='NLI pretrained base model', required=True)
     
     args = parser.parse_args()
     setup_logger()
