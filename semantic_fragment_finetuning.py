@@ -16,13 +16,15 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 def setup_logger():
     log_format = '%(asctime)s - %(name)s:%(levelname)s - %(message)s'
+    logging.getLogger("datasets").propagate = False
+
     logging.basicConfig(filename='train_details.log', level=logging.INFO, format=log_format, datefmt='%H:%M:%S')
     console = logging.StreamHandler()
     console.setLevel(logging.INFO)
     formatter = logging.Formatter(log_format)
     console.setFormatter(formatter)
     logging.getLogger().addHandler(console)
-    return logging.getLogger(__name__)
+    return logging.getLogger()
 
 
 def load_transformer_model(model_name: str = "xlnet-base-cased", base_model_name: str = "xlnet-base-cased"):
