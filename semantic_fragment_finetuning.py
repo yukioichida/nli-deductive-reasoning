@@ -20,12 +20,20 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 def setup_logger():
     log_format = '%(asctime)s - %(name)s:%(levelname)s - %(message)s'
-    logging.basicConfig(filename='train_details.log', level=logging.INFO, format=log_format, datefmt='%H:%M:%S')
-    console = logging.StreamHandler()
-    console.setLevel(logging.INFO)
+    # create logger with 'spam_application'
+    logger = logging.getLogger("finetuning")
+    logger.setLevel(logging.INFO)
+    # create file handler which logs even debug messages
+    fh = logging.FileHandler('finetuning.log')
+    fh.setLevel(logging.INFO)
+    # create console handler with a higher log level
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.INFO)
     formatter = logging.Formatter(log_format)
-    console.setFormatter(formatter)
-    logging.getLogger().addHandler(console)
+    fh.setFormatter(formatter)
+    ch.setFormatter(formatter)
+    logger.addHandler(fh)
+    logger.addHandler(ch)
 
 
 def load_transformer_model(model_name: str = "xlnet-base-cased", base_model_name: str = "xlnet-base-cased"):
@@ -44,10 +52,10 @@ def set_seed(seed):
 
 
 def main(args):
-    logging.getLogger().info("Load model and tokenizer")
+    logging.getLogger("finetuning").info("Load model and tokenizer")
     model, tokenizer = load_transformer_model(model_name=args.nli_base_model)
     
-    logging.getLogger().info("Loading datasets...")
+    logging.getLogger("finetuning").info("Loading datasets...")
     nli_dataset = SemanticFragmentDataset(tokenizer=tokenizer)
     
     semantic_fragments = ['quantifier', 'negation', 'monotonicity_simple', 'monotonicity_hard',
@@ -70,7 +78,7 @@ def main(args):
                                              gradient_accumulation_steps=args.gradient_accumulation_steps,
                                              val_steps=args.val_steps,
                                              val_dataloaders=all_validation_sets)
-    logging.getLogger().info("Train - Semantic Fragments")
+    logging.getLogger("finetuning").info("Train - Semantic Fragments")
     finetuning.train(model, train_dataloader, initial_best_score=2)
 
 
@@ -90,5 +98,5 @@ if __name__ == '__main__':
     args = parser.parse_args()
     setup_logger()
     set_seed(args.seed)
-    logging.getLogger().info(args)
+    logging.getLogger("finetuning").info(args)
     main(args)

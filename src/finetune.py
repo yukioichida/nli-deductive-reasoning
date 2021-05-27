@@ -112,9 +112,9 @@ class MNLISNLIFinetuning(Finetuning):
         val_mismatched_acc = self.validate(model, self.val_mismatched_dataloader, metric)['accuracy']
         val_snli_acc = self.validate(model, self.val_snli_dataloader, metric)['accuracy']
         val_acc = (val_matched_acc + val_mismatched_acc + val_snli_acc) / 3
-        logging.getLogger().info(f"{epoch} - {step} - Val acc matched/mismatched/SNLI dev: "
-                                 f"{val_matched_acc:.4f}/{val_mismatched_acc:.4f}/{val_snli_acc:.4f}"
-                                 f"- Val acc avg: {val_acc:.4f}")
+        logging.getLogger("finetuning").info(f"{epoch} - {step} - Val acc matched/mismatched/SNLI dev: "
+                                             f"{val_matched_acc:.4f}/{val_mismatched_acc:.4f}/{val_snli_acc:.4f}"
+                                             f"- Val acc avg: {val_acc:.4f}")
         return val_acc
 
 
@@ -132,9 +132,9 @@ class SemanticFragmentsFinetuning(Finetuning):
         summed_acc = 0
         for fragment, val_dataloader in self.val_dataloaders.items():
             fragment_val_acc = self.validate(model, val_dataloader, metric)['accuracy']
-            logging.getLogger().info(f"{epoch} - {step} - Val acc {fragment}: {fragment_val_acc:.4f}")
+            logging.getLogger("finetuning").info(f"{epoch} - {step} - Val acc {fragment}: {fragment_val_acc:.4f}")
             len += 1
             summed_acc += fragment_val_acc
         avg_val_acc = summed_acc / len
-        logging.getLogger().info(f"{epoch} - {step} - Avg acc: {avg_val_acc:.4f}")
+        logging.getLogger("finetuning").info(f"{epoch} - {step} - Avg acc: {avg_val_acc:.4f}")
         return avg_val_acc
