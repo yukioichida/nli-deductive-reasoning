@@ -24,7 +24,7 @@ def setup_logger():
     console.setFormatter(formatter)
     logging.getLogger().addHandler(console)
     dataset_logger = logging.getLogger("datasets")
-    dataset_logger.setLevel(logging.CRITICAL)
+    dataset_logger.setLevel(logging.WARNING)
     dataset_logger.propagate = False
     dataset_logger.disabled = True
 
