@@ -10,9 +10,9 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 from transformers import AdamW, get_scheduler
 
-from datasets.utils.logging import disable_propagation
+from datasets.utils.logging import set_verbosity_error
 
-disable_propagation()
+set_verbosity_error()
 
 
 class Finetuning:
