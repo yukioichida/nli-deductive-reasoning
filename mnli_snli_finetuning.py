@@ -20,6 +20,7 @@ def setup_logger():
     formatter = logging.Formatter(log_format)
     console.setFormatter(formatter)
     logging.getLogger().addHandler(console)
+    logging.getLogger().propagate = False
     return logging.getLogger(__name__)
 
 
