@@ -11,13 +11,16 @@ from datasets import concatenate_datasets
 from src.finetune import SemanticFragmentsFinetuning
 from src.nli_datasets import SemanticFragmentDataset
 
+from datasets.utils.logging import disable_propagation
+
+disable_propagation()
+
 ssl._create_default_https_context = ssl._create_unverified_context
 
-from datasets.utils import logging as dataset_log
 
 def setup_logger():
     log_format = '%(asctime)s - %(name)s:%(levelname)s - %(message)s'
-
+    
     dataset_logger = logging.getLogger("datasets")
     dataset_logger.propagate = False
     dataset_log.disable_propagation()

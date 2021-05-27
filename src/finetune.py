@@ -1,17 +1,18 @@
 import abc
 import logging
-import logging
 import math
 from typing import Dict
 
 import torch
+from datasets import Metric, load_metric
 from torch.nn import Module
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from transformers import AdamW, get_scheduler
-from transformers import XLNetForSequenceClassification, XLNetConfig, XLNetTokenizerFast
 
-from datasets import Metric, load_metric
+from datasets.utils.logging import disable_propagation
+
+disable_propagation()
 
 
 class Finetuning:
