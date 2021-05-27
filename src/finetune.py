@@ -2,6 +2,7 @@ import abc
 import logging
 import logging
 import math
+from typing import Dict
 
 import torch
 from torch.nn import Module
@@ -48,7 +49,7 @@ class Finetuning:
         return optimizer, lr_scheduler
     
     @abc.abstractmethod
-    def compute_model_score(self, model: Module, step: int, epoch: int) -> float:
+    def compute_model_score(self, model: Module, step: int, epoch: int, best_score: float) -> float:
         pass
     
     def train(self, model: Module, train_data_loader: DataLoader, initial_best_score: float = 0.866):
@@ -73,10 +74,8 @@ class Finetuning:
                     lr_scheduler.step()
                     optimizer.zero_grad()
                 if (step + 1) % self.val_steps == 0:
-                    model_score = self.compute_model_score(model, step=step, epoch=epoch)
+                    model_score = self.compute_model_score(model, step=step, epoch=epoch, best_score=best_model_score)
                     if model_score > best_model_score:
-                        logging.getLogger().info(f"Saving model: Score {model_score:.4f}")
-                        model.save_pretrained(f'{self.output_model_dir}/trained-model-{model_score:.4f}.ckp')
                         best_model_score = model_score
     
     def validate(self, model: Module, val_dataloader: DataLoader, metric: Metric) -> Metric:
@@ -106,7 +105,7 @@ class MNLISNLIFinetuning(Finetuning):
         self.val_mismatched_dataloader = val_mismatched_dataloader
         self.val_snli_dataloader = val_snli_dataloader
     
-    def compute_model_score(self, model: torch.nn.Module, step: int, epoch: int) -> float:
+    def compute_model_score(self, model: torch.nn.Module, step: int, epoch: int, best_score: float) -> float:
         metric = load_metric('accuracy')
         val_matched_acc = self.validate(model, self.val_matched_dataloader, metric)['accuracy']
         val_mismatched_acc = self.validate(model, self.val_mismatched_dataloader, metric)['accuracy']
@@ -116,3 +115,25 @@ class MNLISNLIFinetuning(Finetuning):
                                  f"{val_matched_acc:.4f}/{val_mismatched_acc:.4f}/{val_snli_acc:.4f}"
                                  f"- Val acc avg: {val_acc:.4f}")
         return val_acc
+
+
+class SemanticFragmentsFinetuning(Finetuning):
+    
+    def __init__(self,
+                 val_dataloaders: Dict[str, DataLoader],
+                 **kwargs):
+        super(SemanticFragmentsFinetuning, self).__init__(**kwargs)
+        self.val_dataloaders = val_dataloaders
+    
+    def compute_model_score(self, model: torch.nn.Module, step: int, epoch: int, best_score: float) -> float:
+        metric = load_metric('accuracy')
+        len = 0
+        summed_acc = 0
+        for fragment, val_dataloader in self.val_dataloaders.items():
+            fragment_val_acc = self.validate(model, val_dataloader, metric)
+            logging.getLogger().info(f"{epoch} - {step} - Val acc {fragment}: {fragment_val_acc:.4f}")
+            len += 1
+            summed_acc += fragment_val_acc
+        avg_val_acc = summed_acc / len
+        logging.getLogger().info(f"{epoch} - {step} - Avg acc: {avg_val_acc:.4f}")
+        return avg_val_acc

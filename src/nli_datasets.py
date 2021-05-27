@@ -74,7 +74,6 @@ class SemanticFragmentDataset(NLIDataset):
         df['label'] = df['label'].map(lambda label: class_labels.str2int(label))
         return Dataset.from_pandas(df[['premise', 'hypothesis', 'label']], features=features)
     
-    def get_file_dataloader(self, dataset_file: str, batch_size: int, threads: int = 4) -> DataLoader:
+    def get_fragment_dataset(self, dataset_file: str, threads: int = 4) -> Dataset:
         dataset = self._convert_tsv_to_dataset(data_file=dataset_file)
-        dataset = self._load_nli_datasets(dataset, threads=threads)
-        return DataLoader(dataset, batch_size=batch_size)
+        return self._load_nli_datasets(dataset, threads=threads)

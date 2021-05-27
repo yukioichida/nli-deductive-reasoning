@@ -4,9 +4,11 @@ import ssl
 
 import numpy as np
 import torch
+from torch.utils.data import DataLoader
 from transformers import XLNetForSequenceClassification, XLNetConfig, XLNetTokenizerFast
+from datasets import concatenate_datasets
 
-from src.finetune import MNLISNLIFinetuning
+from src.finetune import SemanticFragmentsFinetuning
 from src.nli_datasets import SemanticFragmentDataset
 
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -44,22 +46,29 @@ def main(args):
     
     logging.getLogger().info("Loading datasets...")
     nli_dataset = SemanticFragmentDataset(tokenizer=tokenizer)
-    train_dataloader = nli_dataset.get_train_dataloader(batch_size=args.train_batch_size, threads=args.threads)
-    val_matched_dataloader, val_mismatched_dataloader = nli_dataset.get_mnli_dev_dataloaders(
-        batch_size=args.val_batch_size,
-        threads=args.threads)
-    val_snli_dataloader = nli_dataset.get_snli_val_dataloader(batch_size=args.train_batch_size, threads=args.threads)
     
-    finetuning = MNLISNLIFinetuning(output_model_dir="snli_mnli_models",
-                                    lr=args.lr,
-                                    epochs=args.epochs,
-                                    gradient_accumulation_steps=args.gradient_accumulation_steps,
-                                    val_steps=args.val_steps,
-                                    val_matched_dataloader=val_matched_dataloader,
-                                    val_mismatched_dataloader=val_mismatched_dataloader,
-                                    val_snli_dataloader=val_snli_dataloader)
+    semantic_fragments = ['quantifier', 'negation', 'monotonicity_simple', 'monotinicity_hard',
+                          'counting', 'conditional', 'comparative', 'boolean']
+    all_fragments_datasets = []
+    all_validation_sets = {}
+    for fragment in semantic_fragments:
+        train_file = f"{args.data_dir}/{fragment}/train/challenge_train.tsv"
+        train_dataset = nli_dataset.get_fragment_dataset(train_file, threads=args.threads)
+        all_fragments_datasets.append(train_dataset)
+        val_file = f"{args.data_dir}/{fragment}/train/challenge_dev.tsv"
+        val_dataset = nli_dataset.get_fragment_dataset(val_file, threads=args.threads)
+        all_validation_sets[fragment] = DataLoader(val_dataset, batch_size=args.val_batch_size)
     
-    logging.getLogger().info("Train")
+    train_dataset = concatenate_datasets(all_fragments_datasets)
+    train_dataloader = DataLoader(train_dataset, batch_size=args.train_batch_size)
+    finetuning = SemanticFragmentsFinetuning(output_model_dir="semantic_fragment_models",
+                                             lr=args.lr,
+                                             epochs=args.epochs,
+                                             gradient_accumulation_steps=args.gradient_accumulation_steps,
+                                             val_steps=args.val_steps,
+                                             val_dataloaders=all_validation_sets)
+    
+    logging.getLogger().info("Train - Semantic Fragments")
     finetuning.train(model, train_dataloader)
 
 
