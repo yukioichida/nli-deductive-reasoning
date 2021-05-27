@@ -11,9 +11,9 @@ from datasets import concatenate_datasets
 from src.finetune import SemanticFragmentsFinetuning
 from src.nli_datasets import SemanticFragmentDataset
 
-from datasets.utils.logging import disable_propagation
+from datasets.utils.logging import set_verbosity_error
 
-disable_propagation()
+set_verbosity_error()
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
