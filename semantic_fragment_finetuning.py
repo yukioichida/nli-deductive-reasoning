@@ -13,12 +13,14 @@ from src.nli_datasets import SemanticFragmentDataset
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
+from datasets.utils import logging as dataset_log
 
 def setup_logger():
     log_format = '%(asctime)s - %(name)s:%(levelname)s - %(message)s'
 
     dataset_logger = logging.getLogger("datasets")
-    dataset_logger.setLevel(logging.WARNING)
+    dataset_logger.propagate = False
+    dataset_log.disable_propagation()
     logging.basicConfig(filename='train_details.log', level=logging.INFO, format=log_format, datefmt='%H:%M:%S')
     console = logging.StreamHandler()
     console.setLevel(logging.INFO)
