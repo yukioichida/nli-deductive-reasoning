@@ -15,7 +15,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def setup_logger():
-    log_format = '%(asctime)s - %(message)s'
+    log_format = '%(asctime)s - %(name)s - %(message)s'
     logging.basicConfig(filename='train_details.log', level=logging.INFO, format=log_format, datefmt='%H:%M:%S')
     console = logging.StreamHandler()
     console.setLevel(logging.INFO)
