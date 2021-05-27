@@ -74,7 +74,7 @@ class Finetuning:
                     optimizer.step()
                     lr_scheduler.step()
                     optimizer.zero_grad()
-                if (step + 1) % self.val_steps == 0:
+                if (step + 1) % self.val_steps == 0 or step == train_loader_len - 1:
                     model_score = self.compute_model_score(model, step=step, epoch=epoch, best_score=best_model_score)
                     if model_score > best_model_score:
                         best_model_score = model_score
