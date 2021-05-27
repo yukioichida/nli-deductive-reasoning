@@ -47,7 +47,7 @@ def main(args):
     logging.getLogger().info("Loading datasets...")
     nli_dataset = SemanticFragmentDataset(tokenizer=tokenizer)
     
-    semantic_fragments = ['quantifier', 'negation', 'monotonicity_simple', 'monotinicity_hard',
+    semantic_fragments = ['quantifier', 'negation', 'monotonicity_simple', 'monotonicity_hard',
                           'counting', 'conditional', 'comparative', 'boolean']
     all_fragments_datasets = []
     all_validation_sets = {}
