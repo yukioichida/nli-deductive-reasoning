@@ -138,10 +138,10 @@ class SemanticFragmentsFinetuning(Finetuning):
             else:
                 total_logic_acc += fragment_val_acc
         
-        avg_logical_val_acc = total_logic_acc / len(self.val_dataloaders) - 2
+        avg_logical_val_acc = total_logic_acc / (len(self.val_dataloaders) - 2)
         avg_mnli_val_acc = total_mnli_acc / 2  # matched and mismatched
         model_score = (avg_mnli_val_acc + avg_logical_val_acc) / 2  # lossless finening
-        logging.getLogger("finetuning").info(f"{epoch} - {step} - Avg acc: {model_score:.4f} "
-                                             f"- Avg fragments acc: {avg_logical_val_acc:.4f}"
-                                             f"- Avg MNLI acc: {avg_mnli_val_acc:.4f}")
+        logging.getLogger("finetuning").info(f"{epoch} - {step} - Avg acc: {model_score:.4f} |"
+                                             f" Avg fragments acc: {avg_logical_val_acc:.4f} |"
+                                             f" Avg MNLI acc: {avg_mnli_val_acc:.4f}")
         return model_score
