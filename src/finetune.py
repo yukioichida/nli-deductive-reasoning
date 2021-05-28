@@ -128,13 +128,20 @@ class SemanticFragmentsFinetuning(Finetuning):
     
     def compute_model_score(self, model: torch.nn.Module, step: int, epoch: int, best_score: float) -> float:
         metric = load_metric('accuracy')
-        len = 0
-        summed_acc = 0
+        total_logic_acc = 0
+        total_mnli_acc = 0
         for fragment, val_dataloader in self.val_dataloaders.items():
             fragment_val_acc = self.validate(model, val_dataloader, metric)['accuracy']
             logging.getLogger("finetuning").info(f"{epoch} - {step} - Val acc {fragment}: {fragment_val_acc:.4f}")
-            len += 1
-            summed_acc += fragment_val_acc
-        avg_val_acc = summed_acc / len
-        logging.getLogger("finetuning").info(f"{epoch} - {step} - Avg acc: {avg_val_acc:.4f}")
-        return avg_val_acc
+            if "mnli" in fragment:
+                total_mnli_acc += fragment_val_acc
+            else:
+                total_logic_acc += fragment_val_acc
+        
+        avg_logical_val_acc = total_logic_acc / len(self.val_dataloaders) - 2
+        avg_mnli_val_acc = total_mnli_acc / 2  # matched and mismatched
+        model_score = (avg_mnli_val_acc + avg_logical_val_acc) / 2  # lossless finening
+        logging.getLogger("finetuning").info(f"{epoch} - {step} - Avg acc: {model_score:.4f} "
+                                             f"- Avg fragments acc: {avg_logical_val_acc:4.f}"
+                                             f"- Avg MNLI acc: {avg_mnli_val_acc}")
+        return model_score
