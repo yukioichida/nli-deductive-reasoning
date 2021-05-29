@@ -1,14 +1,21 @@
 import argparse
-from old_finetuning import load_transformer_model, validate, set_seed
 import logging
 
 from src.nli_datasets import DefaultNLIDataset
+from src.finetune import MNLISNLIFinetuning
 
 
 def setup_logger():
     log_format = '%(asctime)s - %(message)s'
     logging.basicConfig(level=logging.INFO, format=log_format, datefmt='%H:%M:%S')
 
+def load_transformer_model(model_name: str = "xlnet-base-cased", base_model_name: str = "xlnet-base-cased"):
+    config = XLNetConfig.from_pretrained(base_model_name, num_labels=3)
+    tokenizer = XLNetTokenizerFast.from_pretrained(base_model_name, config=config, do_lower_case=True)
+    model = XLNetForSequenceClassification.from_pretrained(model_name, config=config)
+    if torch.cuda.is_available():
+        model = model.to('cuda')
+    return model, tokenizer
 
 def validation(pretrained_model: str, val_batch_size: int, n_threads: int):
     log = logging.getLogger()
@@ -16,6 +23,8 @@ def validation(pretrained_model: str, val_batch_size: int, n_threads: int):
     
     nli_dataset = DefaultNLIDataset(tokenizer=tokenizer)
     metric = nli_dataset.get_metric()
+    
+    finetuning = MNLISNLIFinetuning()
     
     log.info(f"Loading MNLI  validation datasets (matched/mismatched)")
     val_m_loader, val_mm_loader = nli_dataset.get_mnli_dev_dataloaders(batch_size=val_batch_size, threads=n_threads)

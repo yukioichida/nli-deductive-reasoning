@@ -15,6 +15,21 @@ from datasets.utils.logging import set_verbosity_error
 set_verbosity_error()
 
 
+def validate(self, model: Module, val_dataloader: DataLoader, metric: Metric) -> Metric:
+    model.eval()
+    len_dataloader = len(val_dataloader)
+    with torch.no_grad():
+        for step, batch in tqdm(enumerate(val_dataloader), total=len_dataloader):
+            batch = {key: tensor.to(self.device) for key, tensor in batch.items()}
+            outputs = model(attention_mask=batch['attention_mask'],
+                            input_ids=batch['input_ids'],
+                            token_type_ids=batch['token_type_ids'],
+                            labels=batch['label'])
+            predictions = outputs.logits.argmax(dim=-1)
+            metric.add_batch(predictions=predictions, references=batch["label"])
+    return metric.compute()
+
+
 class Finetuning:
     
     def __init__(self, output_model_dir: str, **train_args):
@@ -78,20 +93,6 @@ class Finetuning:
                     model_score = self.compute_model_score(model, step=step, epoch=epoch, best_score=best_model_score)
                     if model_score > best_model_score:
                         best_model_score = model_score
-    
-    def validate(self, model: Module, val_dataloader: DataLoader, metric: Metric) -> Metric:
-        model.eval()
-        len_dataloader = len(val_dataloader)
-        with torch.no_grad():
-            for step, batch in tqdm(enumerate(val_dataloader), total=len_dataloader):
-                batch = {key: tensor.to(self.device) for key, tensor in batch.items()}
-                outputs = model(attention_mask=batch['attention_mask'],
-                                input_ids=batch['input_ids'],
-                                token_type_ids=batch['token_type_ids'],
-                                labels=batch['label'])
-                predictions = outputs.logits.argmax(dim=-1)
-                metric.add_batch(predictions=predictions, references=batch["label"])
-        return metric.compute()
 
 
 class MNLISNLIFinetuning(Finetuning):
@@ -108,9 +109,9 @@ class MNLISNLIFinetuning(Finetuning):
     
     def compute_model_score(self, model: torch.nn.Module, step: int, epoch: int, best_score: float) -> float:
         metric = load_metric('accuracy')
-        val_matched_acc = self.validate(model, self.val_matched_dataloader, metric)['accuracy']
-        val_mismatched_acc = self.validate(model, self.val_mismatched_dataloader, metric)['accuracy']
-        val_snli_acc = self.validate(model, self.val_snli_dataloader, metric)['accuracy']
+        val_matched_acc = validate(model, self.val_matched_dataloader, metric)['accuracy']
+        val_mismatched_acc = validate(model, self.val_mismatched_dataloader, metric)['accuracy']
+        val_snli_acc = validate(model, self.val_snli_dataloader, metric)['accuracy']
         val_acc = (val_matched_acc + val_mismatched_acc + val_snli_acc) / 3
         logging.getLogger("finetuning").info(f"{epoch} - {step} - Val acc matched/mismatched/SNLI dev: "
                                              f"{val_matched_acc:.4f}/{val_mismatched_acc:.4f}/{val_snli_acc:.4f}"
@@ -131,7 +132,7 @@ class SemanticFragmentsFinetuning(Finetuning):
         total_logic_acc = 0
         total_mnli_acc = 0
         for fragment, val_dataloader in self.val_dataloaders.items():
-            fragment_val_acc = self.validate(model, val_dataloader, metric)['accuracy']
+            fragment_val_acc = validate(model, val_dataloader, metric)['accuracy']
             logging.getLogger("finetuning").info(f"{epoch} - {step} - Val acc {fragment}: {fragment_val_acc:.4f}")
             if "mnli" in fragment:
                 total_mnli_acc += fragment_val_acc
