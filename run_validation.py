@@ -28,6 +28,8 @@ def validation(pretrained_model: str, val_batch_size: int, n_threads: int):
     nli_dataset = DefaultNLIDataset(tokenizer=tokenizer)
     metric = nli_dataset.get_metric()
     
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    
     log.info(f"Loading MNLI  validation datasets (matched/mismatched)")
     val_m_loader, val_mm_loader = nli_dataset.get_mnli_dev_dataloaders(batch_size=val_batch_size, threads=n_threads)
     log.info(f"Loading SNLI test set")
@@ -40,7 +42,7 @@ def validation(pretrained_model: str, val_batch_size: int, n_threads: int):
     log.info(f"Val acc matched/mismatched: {val_matched_acc:.4f}/{val_mismatched_acc:.4f} - Val acc avg: {val_acc:.4f}")
     
     log.info("Validating on SNLI sets")
-    test_snli_acc = validate(model, test_snli_loader, metric)['accuracy']
+    test_snli_acc = validate(model, test_snli_loader, metric, device)['accuracy']
     log.info(f"SNLI test set acc: {test_snli_acc: .4f}")
 
 
