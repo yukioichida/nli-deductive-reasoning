@@ -2,7 +2,7 @@ import argparse
 from old_finetuning import load_transformer_model, validate, set_seed
 import logging
 
-from src.nli_datasets import NLIDatasets
+from src.nli_datasets import DefaultNLIDataset
 
 
 def setup_logger():
@@ -14,11 +14,11 @@ def validation(pretrained_model: str, val_batch_size: int, n_threads: int):
     log = logging.getLogger()
     model, tokenizer = load_transformer_model(model_name=pretrained_model)
     
-    nli_dataset = NLIDatasets(tokenizer=tokenizer)
+    nli_dataset = DefaultNLIDataset(tokenizer=tokenizer)
     metric = nli_dataset.get_metric()
     
     log.info(f"Loading MNLI  validation datasets (matched/mismatched)")
-    val_m_loader, val_mm_loader = nli_dataset.get_mnli_dev_dataloaders(val_batch_size=val_batch_size, threads=n_threads)
+    val_m_loader, val_mm_loader = nli_dataset.get_mnli_dev_dataloaders(batch_size=val_batch_size, threads=n_threads)
     log.info(f"Loading SNLI test set")
     test_snli_loader = nli_dataset.get_snli_test_dataloader(batch_size=val_batch_size, threads=n_threads)
     
