@@ -1,13 +1,16 @@
 import argparse
 import logging
-
+import torch
+import numpy as np
 from src.nli_datasets import DefaultNLIDataset
-from src.finetune import MNLISNLIFinetuning
+from src.finetune import validate
+from transformers import XLNetForSequenceClassification, XLNetConfig, XLNetTokenizerFast
 
 
 def setup_logger():
     log_format = '%(asctime)s - %(message)s'
     logging.basicConfig(level=logging.INFO, format=log_format, datefmt='%H:%M:%S')
+
 
 def load_transformer_model(model_name: str = "xlnet-base-cased", base_model_name: str = "xlnet-base-cased"):
     config = XLNetConfig.from_pretrained(base_model_name, num_labels=3)
@@ -17,14 +20,13 @@ def load_transformer_model(model_name: str = "xlnet-base-cased", base_model_name
         model = model.to('cuda')
     return model, tokenizer
 
+
 def validation(pretrained_model: str, val_batch_size: int, n_threads: int):
     log = logging.getLogger()
     model, tokenizer = load_transformer_model(model_name=pretrained_model)
     
     nli_dataset = DefaultNLIDataset(tokenizer=tokenizer)
     metric = nli_dataset.get_metric()
-    
-    finetuning = MNLISNLIFinetuning()
     
     log.info(f"Loading MNLI  validation datasets (matched/mismatched)")
     val_m_loader, val_mm_loader = nli_dataset.get_mnli_dev_dataloaders(batch_size=val_batch_size, threads=n_threads)
@@ -40,6 +42,12 @@ def validation(pretrained_model: str, val_batch_size: int, n_threads: int):
     log.info("Validating on SNLI sets")
     test_snli_acc = validate(model, test_snli_loader, metric)['accuracy']
     log.info(f"SNLI test set acc: {test_snli_acc: .4f}")
+
+
+def set_seed(seed):
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
 
 
 if __name__ == '__main__':
