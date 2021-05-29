@@ -36,8 +36,8 @@ def validation(pretrained_model: str, val_batch_size: int, n_threads: int):
     test_snli_loader = nli_dataset.get_snli_test_dataloader(batch_size=val_batch_size, threads=n_threads)
     
     log.info("Validating on MNLI sets")
-    val_matched_acc = validate(model, val_m_loader, metric)['accuracy']
-    val_mismatched_acc = validate(model, val_mm_loader, metric)['accuracy']
+    val_matched_acc = validate(model, val_m_loader, metric, device)['accuracy']
+    val_mismatched_acc = validate(model, val_mm_loader, metric, device)['accuracy']
     val_acc = (val_matched_acc + val_mismatched_acc) / 2
     log.info(f"Val acc matched/mismatched: {val_matched_acc:.4f}/{val_mismatched_acc:.4f} - Val acc avg: {val_acc:.4f}")
     
