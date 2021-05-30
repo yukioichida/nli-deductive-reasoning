@@ -53,9 +53,9 @@ def inference(pretrained_model: str, premise: str, hypothesis: str):
     
     log.info("Premise:", premise)
     log.info("Hypothesis:", hypothesis)
-    log.info("Entailment:", predicted_probability[0])
-    log.info("Neutral:", predicted_probability[1])
-    log.info("Contradiction:", predicted_probability[2])
+    log.info(f"Entailment: {predicted_probability[0]:.4f}")
+    log.info(f"Neutral: {predicted_probability[1]:.4f}")
+    log.info(f"Contradiction: {predicted_probability[2]:.4f}")
 
 
 def set_seed(seed):
