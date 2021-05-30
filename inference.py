@@ -40,9 +40,9 @@ def inference(pretrained_model: str, premise: str, hypothesis: str):
     tokenized_input_seq_pair = tokenizer.encode_plus(premise, hypothesis,
                                                      max_length=128, return_token_type_ids=True, truncation=True)
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    input_ids = torch.Tensor(tokenized_input_seq_pair['input_ids'], device=device).long().unsqueeze(0)
-    token_type_ids = torch.Tensor(tokenized_input_seq_pair['token_type_ids'], device=device).long().unsqueeze(0)
-    attention_mask = torch.Tensor(tokenized_input_seq_pair['attention_mask'], device=device).long().unsqueeze(0)
+    input_ids = torch.Tensor(tokenized_input_seq_pair['input_ids']).long().unsqueeze(0).to(device)
+    token_type_ids = torch.Tensor(tokenized_input_seq_pair['token_type_ids']).long().unsqueeze(0).to(device)
+    attention_mask = torch.Tensor(tokenized_input_seq_pair['attention_mask']).long().unsqueeze(0).to(device)
     
     outputs = model(input_ids,
                     attention_mask=attention_mask,
