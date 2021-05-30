@@ -152,5 +152,5 @@ class SemanticFragmentsFinetuning(Finetuning):
         if model_score > best_score:
             logging.getLogger("finetuning").info(f"Saving model with score {model_score}")
             model.save_pretrained(
-                f'models/mnli-snli-model-{model_score:.4f}-avg_mnli{avg_mnli_val_acc:4.f}-avg_frag{avg_logical_val_acc:4f}')
+                f'models/mnli-snli-model-{model_score:.4f}-avg_mnli{avg_mnli_val_acc:.4f}-avg_frag{avg_logical_val_acc:.4f}')
         return model_score
