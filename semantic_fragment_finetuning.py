@@ -90,7 +90,7 @@ def main(args):
                                              val_steps=args.val_steps,
                                              val_dataloaders=all_validation_sets)
     logging.getLogger("finetuning").info("Train - Semantic Fragments")
-    finetuning.train(model, train_dataloader, initial_best_score=0.985)
+    finetuning.train(model, train_dataloader, initial_best_score=0.91)
 
 
 if __name__ == '__main__':
