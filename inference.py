@@ -9,7 +9,7 @@ from transformers import XLNetForSequenceClassification, XLNetConfig, XLNetToken
 def setup_logger():
     log_format = '%(asctime)s - %(name)s:%(levelname)s - %(message)s'
     # create logger with 'spam_application'
-    logger = logging.getLogger("inferencee")
+    logger = logging.getLogger("inference")
     logger.setLevel(logging.INFO)
     # create file handler which logs even debug messages
     # fh = logging.FileHandler('inference.log')
@@ -34,7 +34,7 @@ def load_transformer_model(model_name: str = "xlnet-base-cased", base_model_name
 
 
 def inference(pretrained_model: str, premise: str, hypothesis: str):
-    log = logging.getLogger()
+    log = logging.getLogger("inference")
     model, tokenizer = load_transformer_model(model_name=pretrained_model)
     
     tokenized_input_seq_pair = tokenizer.encode_plus(premise, hypothesis,
