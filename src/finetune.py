@@ -116,6 +116,10 @@ class MNLISNLIFinetuning(Finetuning):
         logging.getLogger("finetuning").info(f"{epoch} - {step} - Val acc matched/mismatched/SNLI dev: "
                                              f"{val_matched_acc:.4f}/{val_mismatched_acc:.4f}/{val_snli_acc:.4f}"
                                              f"- Val acc avg: {val_acc:.4f}")
+        if val_acc > best_score:
+            logging.getLogger("finetuning").info(f"Saving model with score {val_acc}")
+            model.save_pretrained(
+                f'models/mnli-snli-model-{val_acc:.4f}-m{val_matched_acc:4.f}-mm{val_mismatched_acc:4f}-snli_dev{val_snli_acc:4.f}.ckp')
         return val_acc
 
 
@@ -145,4 +149,8 @@ class SemanticFragmentsFinetuning(Finetuning):
         logging.getLogger("finetuning").info(f"{epoch} - {step} - Avg acc: {model_score:.4f} |"
                                              f" Avg fragments acc: {avg_logical_val_acc:.4f} |"
                                              f" Avg MNLI acc: {avg_mnli_val_acc:.4f}")
+        if model_score > best_score:
+            logging.getLogger("finetuning").info(f"Saving model with score {model_score}")
+            model.save_pretrained(
+                f'models/mnli-snli-model-{model_score:.4f}-avg_mnli{avg_mnli_val_acc:4.f}-avg_frag{avg_logical_val_acc:4f}')
         return model_score
