@@ -23,7 +23,7 @@ def validate(model: Module, val_dataloader: DataLoader, metric: Metric, device: 
             batch = {key: tensor.to(device) for key, tensor in batch.items()}
             outputs = model(attention_mask=batch['attention_mask'],
                             input_ids=batch['input_ids'],
-                            token_type_ids=batch['token_type_ids'],
+                            #token_type_ids=batch['token_type_ids'],
                             labels=batch['label'])
             predictions = outputs.logits.argmax(dim=-1)
             metric.add_batch(predictions=predictions, references=batch["label"])
@@ -81,7 +81,7 @@ class Finetuning:
                 
                 outputs = model(attention_mask=batch['attention_mask'],
                                 input_ids=batch['input_ids'],
-                                token_type_ids=batch['token_type_ids'],
+                                #token_type_ids=batch['token_type_ids'],
                                 labels=batch['label'])
                 loss = outputs.loss / self.gradient_accumulation_steps
                 loss.backward()
