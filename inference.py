@@ -51,8 +51,7 @@ def inference(pretrained_model: str, premise: str, hypothesis: str):
     
     predicted_probability = torch.softmax(outputs[0], dim=1)[0].tolist()  # batch_size only one
     
-    log.info("Premise:", premise)
-    log.info("Hypothesis:", hypothesis)
+    log.info(f"Premise: {premise} - Hypothesis: {hypothesis}")
     log.info(f"Entailment: {predicted_probability[0]:.4f}")
     log.info(f"Neutral: {predicted_probability[1]:.4f}")
     log.info(f"Contradiction: {predicted_probability[2]:.4f}")
