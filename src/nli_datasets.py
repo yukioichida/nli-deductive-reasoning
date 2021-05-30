@@ -27,7 +27,7 @@ class NLIDataset:
                                        truncation=True, padding='max_length', max_length=self.max_length),
             batched=True,
             num_proc=threads)
-        loaded_dataset.set_format(type='torch', columns=['input_ids', 'token_type_ids', 'attention_mask', 'label'])
+        loaded_dataset.set_format(type='torch', columns=['input_ids', 'attention_mask', 'label'])
         return loaded_dataset
 
 
