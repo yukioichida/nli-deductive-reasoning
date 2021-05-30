@@ -39,6 +39,7 @@ class Finetuning:
         self.epochs = train_args['epochs']
         self.gradient_accumulation_steps = train_args['gradient_accumulation_steps']
         self.val_steps = train_args['val_steps']
+        self.save_model = train_args['save_model']
     
     def get_optimizers(self, model: torch.nn.Module, train_cycles: int):
         num_update_steps_per_epoch = math.ceil(train_cycles / self.gradient_accumulation_steps)
@@ -149,7 +150,7 @@ class SemanticFragmentsFinetuning(Finetuning):
         logging.getLogger("finetuning").info(f"{epoch} - {step} - Avg acc: {model_score:.4f} |"
                                              f" Avg fragments acc: {avg_logical_val_acc:.4f} |"
                                              f" Avg MNLI acc: {avg_mnli_val_acc:.4f}")
-        if model_score > best_score:
+        if model_score > best_score and self.save_model:
             logging.getLogger("finetuning").info(f"Saving model with score {model_score}")
             model.save_pretrained(
                 f'{self.output_model_dir}/logical-model-{model_score:.4f}-avg_mnli{avg_mnli_val_acc:.4f}-avg_frag{avg_logical_val_acc:.4f}')

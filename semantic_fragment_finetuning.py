@@ -10,6 +10,7 @@ from datasets import concatenate_datasets
 
 from src.finetune import SemanticFragmentsFinetuning
 from src.nli_datasets import SemanticFragmentDataset, DefaultNLIDataset
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
 from datasets.utils.logging import set_verbosity_error
 
@@ -36,10 +37,9 @@ def setup_logger():
     logger.addHandler(ch)
 
 
-def load_transformer_model(model_name: str = "xlnet-base-cased", base_model_name: str = "xlnet-base-cased"):
-    config = XLNetConfig.from_pretrained(base_model_name, num_labels=3)
-    tokenizer = XLNetTokenizerFast.from_pretrained(base_model_name, config=config, do_lower_case=True)
-    model = XLNetForSequenceClassification.from_pretrained(model_name, config=config)
+def load_transformer_model(model_name: str, base_model_name: str):
+    tokenizer = AutoTokenizer.from_pretrained("ynie/roberta-large-snli_mnli_fever_anli_R1_R2_R3-nli")
+    model = AutoModelForSequenceClassification.from_pretrained("ynie/roberta-large-snli_mnli_fever_anli_R1_R2_R3-nli")
     if torch.cuda.is_available():
         model = model.to('cuda')
     return model, tokenizer
@@ -52,8 +52,9 @@ def set_seed(seed):
 
 
 def main(args):
+    model_name = "ynie/roberta-large-snli_mnli_fever_anli_R1_R2_R3-nli"
     logging.getLogger("finetuning").info("Load model and tokenizer")
-    model, tokenizer = load_transformer_model(model_name=args.nli_base_model)
+    model, tokenizer = load_transformer_model(model_name=model_name, base_model_name=model_name)
     
     logging.getLogger("finetuning").info("Loading datasets...")
     mnli_dataset = DefaultNLIDataset(tokenizer=tokenizer)
@@ -88,9 +89,13 @@ def main(args):
                                              epochs=args.epochs,
                                              gradient_accumulation_steps=args.gradient_accumulation_steps,
                                              val_steps=args.val_steps,
-                                             val_dataloaders=all_validation_sets)
+                                             val_dataloaders=all_validation_sets,
+                                             save_model=args.save_model)
     logging.getLogger("finetuning").info("Train - Semantic Fragments")
-    finetuning.train(model, train_dataloader, initial_best_score=0.91)
+    if args.validate:
+        finetuning.compute_model_score(model)
+    else:
+        finetuning.train(model, train_dataloader, initial_best_score=0.91)
 
 
 if __name__ == '__main__':
@@ -106,6 +111,8 @@ if __name__ == '__main__':
     parser.add_argument('--data_dir', type=str, help='Semantic Fragment dataset directory', required=True)
     parser.add_argument('--nli_base_model', type=str, help='NLI pretrained base model', required=True)
     parser.add_argument('--only_logic', action='store_true', default=False, help='Use only logic fragments')
+    parser.add_argument('--validate', action='store_true', default=False, help='Validate only')
+    parser.add_argument('--save_model', action='store_true', default=False, help='Save model')
     
     args = parser.parse_args()
     setup_logger()
