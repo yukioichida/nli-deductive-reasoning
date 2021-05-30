@@ -12,15 +12,15 @@ def setup_logger():
     logger = logging.getLogger("inferencee")
     logger.setLevel(logging.INFO)
     # create file handler which logs even debug messages
-    #fh = logging.FileHandler('inference.log')
-    #fh.setLevel(logging.INFO)
+    # fh = logging.FileHandler('inference.log')
+    # fh.setLevel(logging.INFO)
     # create console handler with a higher log level
     ch = logging.StreamHandler()
     ch.setLevel(logging.INFO)
     formatter = logging.Formatter(log_format)
-    #fh.setFormatter(formatter)
+    # fh.setFormatter(formatter)
     ch.setFormatter(formatter)
-    #logger.addHandler(fh)
+    # logger.addHandler(fh)
     logger.addHandler(ch)
 
 
@@ -39,10 +39,10 @@ def inference(pretrained_model: str, premise: str, hypothesis: str):
     
     tokenized_input_seq_pair = tokenizer.encode_plus(premise, hypothesis,
                                                      max_length=128, return_token_type_ids=True, truncation=True)
-    
-    input_ids = torch.Tensor(tokenized_input_seq_pair['input_ids']).long().unsqueeze(0)
-    token_type_ids = torch.Tensor(tokenized_input_seq_pair['token_type_ids']).long().unsqueeze(0)
-    attention_mask = torch.Tensor(tokenized_input_seq_pair['attention_mask']).long().unsqueeze(0)
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    input_ids = torch.Tensor(tokenized_input_seq_pair['input_ids'], device=device).long().unsqueeze(0)
+    token_type_ids = torch.Tensor(tokenized_input_seq_pair['token_type_ids'], device=device).long().unsqueeze(0)
+    attention_mask = torch.Tensor(tokenized_input_seq_pair['attention_mask'], device=device).long().unsqueeze(0)
     
     outputs = model(input_ids,
                     attention_mask=attention_mask,
