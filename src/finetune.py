@@ -132,7 +132,8 @@ class SemanticFragmentsFinetuning(Finetuning):
         super(SemanticFragmentsFinetuning, self).__init__(**kwargs)
         self.val_dataloaders = val_dataloaders
     
-    def compute_model_score(self, model: torch.nn.Module, step: int, epoch: int, best_score: float) -> float:
+    def compute_model_score(self, model: torch.nn.Module, step: int = 0, epoch: int = 0,
+                            best_score: float = 1.) -> float:
         metric = load_metric('accuracy')
         total_logic_acc = 0
         total_mnli_acc = 0
