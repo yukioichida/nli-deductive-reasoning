@@ -38,7 +38,7 @@ def setup_logger():
 
 
 def load_transformer_model(model_name: str, base_model_name: str):
-    tokenizer = AutoTokenizer.from_pretrained("ynie/roberta-large-snli_mnli_fever_anli_R1_R2_R3-nli")
+    tokenizer = AutoTokenizer.from_pretrained("ynie/roberta-large-snli_mnli_fever_anli_R1_R2_R3-nli", do_lower_case=True)
     model = AutoModelForSequenceClassification.from_pretrained("ynie/roberta-large-snli_mnli_fever_anli_R1_R2_R3-nli")
     if torch.cuda.is_available():
         model = model.to('cuda')
