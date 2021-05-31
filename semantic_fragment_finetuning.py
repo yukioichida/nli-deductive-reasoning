@@ -80,7 +80,6 @@ def main(args):
         val_dataset = nli_dataset.get_fragment_dataset(val_file, threads=args.threads)
         all_validation_sets[fragment] = DataLoader(val_dataset, batch_size=args.val_batch_size)
     
-    all_validation_sets = {}
     all_validation_sets['val_mnli_matched'] = matched_dataloader
     all_validation_sets['val_mnli_mismatched'] = mismatched_dataloader
     
