@@ -77,7 +77,7 @@ def main(args):
         all_fragments_datasets.append(train_dataset)
         val_file = f"{args.data_dir}/{fragment}/train/challenge_dev.tsv"
         val_dataset = nli_dataset.get_fragment_dataset(val_file, threads=args.threads)
-        all_validation_sets[fragment] = DataLoader(val_dataset, batch_size=args.val_batch_size)
+        all_validation_sets[fragment] = DataLoader(val_dataset, batch_size=args.val_batch_size, drop_last=False)
     
     all_validation_sets['val_mnli_matched'] = matched_dataloader
     all_validation_sets['val_mnli_mismatched'] = mismatched_dataloader
