@@ -38,7 +38,8 @@ def setup_logger():
 
 
 def load_transformer_model(model_name: str, base_model_name: str):
-    tokenizer = AutoTokenizer.from_pretrained("ynie/roberta-large-snli_mnli_fever_anli_R1_R2_R3-nli", do_lower_case=True)
+    tokenizer = AutoTokenizer.from_pretrained("ynie/roberta-large-snli_mnli_fever_anli_R1_R2_R3-nli",
+                                              do_lower_case=True)
     model = AutoModelForSequenceClassification.from_pretrained("ynie/roberta-large-snli_mnli_fever_anli_R1_R2_R3-nli")
     if torch.cuda.is_available():
         model = model.to('cuda')
@@ -77,8 +78,9 @@ def main(args):
         all_fragments_datasets.append(train_dataset)
         val_file = f"{args.data_dir}/{fragment}/train/challenge_dev.tsv"
         val_dataset = nli_dataset.get_fragment_dataset(val_file, threads=args.threads)
-        all_validation_sets[fragment] = DataLoader(val_dataset, batch_size=args.val_batch_size, drop_last=False)
+        all_validation_sets[fragment] = DataLoader(val_dataset, batch_size=args.val_batch_size)
     
+    all_validation_sets = {}
     all_validation_sets['val_mnli_matched'] = matched_dataloader
     all_validation_sets['val_mnli_mismatched'] = mismatched_dataloader
     
@@ -93,11 +95,9 @@ def main(args):
                                              save_model=args.save_model)
     logging.getLogger("finetuning").info("Train - Semantic Fragments")
     if args.validate:
-        model.eval()
-        with torch.no_grad():
-            finetuning.compute_model_score(model)
+        finetuning.compute_model_score(model)
     else:
-        finetuning.train(model, train_dataloader, initial_best_score=0.91)
+        finetuning.train(model, train_dataloader, initial_best_score=2)
 
 
 if __name__ == '__main__':
