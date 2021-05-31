@@ -93,7 +93,9 @@ def main(args):
                                              save_model=args.save_model)
     logging.getLogger("finetuning").info("Train - Semantic Fragments")
     if args.validate:
-        finetuning.compute_model_score(model)
+        model.eval()
+        with torch.no_grad():
+            finetuning.compute_model_score(model)
     else:
         finetuning.train(model, train_dataloader, initial_best_score=0.91)
 
