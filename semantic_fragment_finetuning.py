@@ -60,7 +60,7 @@ def main(args):
     mnli_dataset = DefaultNLIDataset(tokenizer=tokenizer)
     matched_dataloader, mismatched_dataloader = mnli_dataset.get_mnli_dev_dataloaders(batch_size=args.val_batch_size,
                                                                                       threads=args.threads)
-    nli_dataset = SemanticFragmentDataset(tokenizer=tokenizer)
+    nli_dataset = SemanticFragmentDataset(tokenizer=tokenizer, max_length=256)
     
     logical_fragments = ['quantifier', 'negation', 'counting', 'conditional', 'comparative', 'boolean']
     monotonicity_fragments = ['monotonicity_simple', 'monotonicity_hard']
