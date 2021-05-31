@@ -96,7 +96,7 @@ def main(args):
     if args.validate:
         finetuning.compute_model_score(model)
     else:
-        finetuning.train(model, train_dataloader, initial_best_score=2)
+        finetuning.train(model, train_dataloader, initial_best_score=.939)
 
 
 if __name__ == '__main__':
