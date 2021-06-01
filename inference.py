@@ -3,7 +3,7 @@ import logging
 
 import numpy as np
 import torch
-from transformers import XLNetForSequenceClassification, XLNetConfig, XLNetTokenizerFast
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
 
 def setup_logger():
@@ -25,9 +25,9 @@ def setup_logger():
 
 
 def load_transformer_model(model_name: str = "xlnet-base-cased", base_model_name: str = "xlnet-base-cased"):
-    config = XLNetConfig.from_pretrained(base_model_name, num_labels=3)
-    tokenizer = XLNetTokenizerFast.from_pretrained(base_model_name, config=config, do_lower_case=True)
-    model = XLNetForSequenceClassification.from_pretrained(model_name, config=config)
+    tokenizer = AutoTokenizer.from_pretrained("ynie/roberta-large-snli_mnli_fever_anli_R1_R2_R3-nli",
+                                              do_lower_case=True)
+    model = AutoModelForSequenceClassification.from_pretrained(model_name)
     if torch.cuda.is_available():
         model = model.to('cuda')
     return model, tokenizer
@@ -38,7 +38,7 @@ def inference(pretrained_model: str, premise: str, hypothesis: str):
     model, tokenizer = load_transformer_model(model_name=pretrained_model)
     
     tokenized_input_seq_pair = tokenizer.encode_plus(premise, hypothesis,
-                                                     max_length=128, return_token_type_ids=True, truncation=True)
+                                                     max_length=256, return_token_type_ids=True, truncation=True)
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     input_ids = torch.Tensor(tokenized_input_seq_pair['input_ids']).long().unsqueeze(0).to(device)
     token_type_ids = torch.Tensor(tokenized_input_seq_pair['token_type_ids']).long().unsqueeze(0).to(device)
