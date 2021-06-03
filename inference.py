@@ -35,26 +35,30 @@ def load_transformer_model(model_name: str = "xlnet-base-cased", base_model_name
 
 def inference(pretrained_model: str, premise: str, hypothesis: str):
     log = logging.getLogger("inference")
+    log.info("Inference")
     model, tokenizer = load_transformer_model(model_name=pretrained_model)
     
     tokenized_input_seq_pair = tokenizer.encode_plus(premise, hypothesis,
                                                      max_length=256, return_token_type_ids=False, truncation=True)
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     input_ids = torch.Tensor(tokenized_input_seq_pair['input_ids']).long().unsqueeze(0).to(device)
-    #token_type_ids = torch.Tensor(tokenized_input_seq_pair['token_type_ids']).long().unsqueeze(0).to(device)
+    # token_type_ids = torch.Tensor(tokenized_input_seq_pair['token_type_ids']).long().unsqueeze(0).to(device)
     attention_mask = torch.Tensor(tokenized_input_seq_pair['attention_mask']).long().unsqueeze(0).to(device)
     
-    outputs = model(input_ids,
-                    attention_mask=attention_mask,
-                    #token_type_ids=token_type_ids,
-                    labels=None)
-    
-    predicted_probability = torch.softmax(outputs[0], dim=1)[0].tolist()  # batch_size only one
-    
-    log.info(f"Premise: {premise} - Hypothesis: {hypothesis}")
-    log.info(f"Entailment: {predicted_probability[0]:.4f}")
-    log.info(f"Neutral: {predicted_probability[1]:.4f}")
-    log.info(f"Contradiction: {predicted_probability[2]:.4f}")
+    model.eval()
+    with torch.no_grad():
+        outputs = model(input_ids,
+                        attention_mask=attention_mask,
+                        # token_type_ids=token_type_ids,
+                        labels=None)
+        print(outputs)
+        predicted_probability = torch.softmax(outputs[0], dim=1)[0].tolist()  # batch_size only one
+        
+        log.info(f"Premise: {premise} - Hypothesis: {hypothesis}")
+        log.info(
+            f"Entailment: {predicted_probability[0]:.4f} | "
+            f"Neutral: {predicted_probability[1]:.4f} | "
+            f"Contradiction: {predicted_probability[2]:.4f}")
 
 
 def set_seed(seed):
