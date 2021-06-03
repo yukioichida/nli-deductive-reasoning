@@ -37,10 +37,9 @@ def setup_logger():
     logger.addHandler(ch)
 
 
-def load_transformer_model(model_name: str, base_model_name: str):
-    tokenizer = AutoTokenizer.from_pretrained("ynie/roberta-large-snli_mnli_fever_anli_R1_R2_R3-nli",
-                                              do_lower_case=True)
-    model = AutoModelForSequenceClassification.from_pretrained("ynie/roberta-large-snli_mnli_fever_anli_R1_R2_R3-nli")
+def load_transformer_model(model_name: str):
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    model = AutoModelForSequenceClassification.from_pretrained(model_name)
     if torch.cuda.is_available():
         model = model.to('cuda')
     return model, tokenizer
@@ -53,9 +52,8 @@ def set_seed(seed):
 
 
 def main(args):
-    model_name = "ynie/roberta-large-snli_mnli_fever_anli_R1_R2_R3-nli"
     logging.getLogger("finetuning").info("Load model and tokenizer")
-    model, tokenizer = load_transformer_model(model_name=model_name, base_model_name=model_name)
+    model, tokenizer = load_transformer_model(model_name=args.nli_base_model)
     
     logging.getLogger("finetuning").info("Loading datasets...")
     mnli_dataset = DefaultNLIDataset(tokenizer=tokenizer)
