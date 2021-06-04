@@ -24,19 +24,18 @@ def setup_logger():
     logger.addHandler(ch)
 
 
-def load_transformer_model(model_name: str = "xlnet-base-cased", base_model_name: str = "xlnet-base-cased"):
-    tokenizer = AutoTokenizer.from_pretrained("ynie/roberta-large-snli_mnli_fever_anli_R1_R2_R3-nli",
-                                              do_lower_case=True)
+def load_transformer_model(model_name: str = "xlnet-base-cased", tokenizer: str = "xlnet-base-cased"):
+    tokenizer = AutoTokenizer.from_pretrained(tokenizer, do_lower_case=True)
     model = AutoModelForSequenceClassification.from_pretrained(model_name)
     if torch.cuda.is_available():
         model = model.to('cuda')
     return model, tokenizer
 
 
-def inference(pretrained_model: str, premise: str, hypothesis: str):
+def inference(pretrained_model: str, premise: str, hypothesis: str, tokenizer: str):
     log = logging.getLogger("inference")
     log.info("Inference")
-    model, tokenizer = load_transformer_model(model_name=pretrained_model)
+    model, tokenizer = load_transformer_model(model_name=pretrained_model, tokenizer=tokenizer)
     
     tokenized_input_seq_pair = tokenizer.encode_plus(premise, hypothesis,
                                                      max_length=256, return_token_type_ids=False, truncation=True)
@@ -70,6 +69,7 @@ def set_seed(seed):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Inference in an NLI Model')
     parser.add_argument('--pretrained_model', type=str, required=True, help='Pretrained dir model')
+    parser.add_argument('--tokenizer', type=str, required=True, help='Tokenizer model')
     parser.add_argument('--h', type=str, help='Hypothesis')
     parser.add_argument('--p', type=str, help='Premise')
     parser.add_argument('--seed', type=int, default=42, help='SEED')
@@ -78,4 +78,4 @@ if __name__ == '__main__':
     setup_logger()
     set_seed(args.seed)
     logging.getLogger().info(args)
-    inference(pretrained_model=args.pretrained_model, premise=args.p, hypothesis=args.h)
+    inference(pretrained_model=args.pretrained_model, premise=args.p, hypothesis=args.h, tokenizer=args.tokenizer)
