@@ -48,7 +48,6 @@ def inference(pretrained_model: str, premise: str, hypothesis: str, tokenizer: s
     with torch.no_grad():
         outputs = model(input_ids,
                         attention_mask=attention_mask,
-                        # token_type_ids=token_type_ids,
                         labels=None)
         print(outputs)
         predicted_probability = torch.softmax(outputs[0], dim=1)[0].tolist()  # batch_size only one
