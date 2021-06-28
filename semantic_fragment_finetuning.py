@@ -35,6 +35,17 @@ def setup_logger():
     ch.setFormatter(formatter)
     logger.addHandler(fh)
     logger.addHandler(ch)
+    
+def get_model(model_name: str) -> str:
+    MODELS = {
+        'roberta': 'ynie/roberta-large-snli_mnli_fever_anli_R1_R2_R3-nli',
+        'xlnet': 'ynie/xlnet-large-cased-snli_mnli_fever_anli_R1_R2_R3-nli'
+    }
+    
+    if model_name not in MODELS.keys():
+        logging.getLogger("finetuning").info(f"Invalid model name {model_name}")
+    else:
+        return MODELS[model_name]
 
 
 def load_transformer_model(model_name: str):
@@ -53,7 +64,8 @@ def set_seed(seed):
 
 def main(args):
     logging.getLogger("finetuning").info("Load model and tokenizer")
-    model, tokenizer = load_transformer_model(model_name=args.nli_base_model)
+    model_name = get_model(args.nli_base_model)
+    model, tokenizer = load_transformer_model(model_name=model_name)
     
     logging.getLogger("finetuning").info("Loading datasets...")
     mnli_dataset = DefaultNLIDataset(tokenizer=tokenizer)
@@ -83,7 +95,7 @@ def main(args):
     
     train_dataset = concatenate_datasets(all_fragments_datasets)
     train_dataloader = DataLoader(train_dataset, batch_size=args.train_batch_size)
-    finetuning = SemanticFragmentsFinetuning(output_model_dir="semantic_fragment_models",
+    finetuning = SemanticFragmentsFinetuning(output_model_dir=f"semantic_fragment_models_{args.nli_base_model}",
                                              lr=args.lr,
                                              epochs=args.epochs,
                                              gradient_accumulation_steps=args.gradient_accumulation_steps,
@@ -99,7 +111,7 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Finetune NLI Model')
-    parser.add_argument('--lr', type=float, default=3e-5, help='Learning rate')
+    parser.add_argument('--lr', type=float, default=1e-6, help='Learning rate')
     parser.add_argument('--train_batch_size', type=int, default=8, help='Train batch size')
     parser.add_argument('--val_batch_size', type=int, default=32, help='Validation batch size')
     parser.add_argument('--gradient_accumulation_steps', type=int, default=1, help='Gradient Accumulation Steps')

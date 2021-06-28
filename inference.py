@@ -5,6 +5,10 @@ import numpy as np
 import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
+
 
 def setup_logger():
     log_format = '%(asctime)s - %(name)s:%(levelname)s - %(message)s'
@@ -32,10 +36,9 @@ def load_transformer_model(model_name: str = "xlnet-base-cased", tokenizer: str 
     return model, tokenizer
 
 
-def inference(pretrained_model: str, premise: str, hypothesis: str, tokenizer: str):
+def inference(model, premise: str, hypothesis: str, tokenizer):
     log = logging.getLogger("inference")
-    log.info("Inference")
-    model, tokenizer = load_transformer_model(model_name=pretrained_model, tokenizer=tokenizer)
+    #log.info("Inference")
     
     tokenized_input_seq_pair = tokenizer.encode_plus(premise, hypothesis,
                                                      max_length=256, return_token_type_ids=False, truncation=True)
@@ -49,9 +52,10 @@ def inference(pretrained_model: str, premise: str, hypothesis: str, tokenizer: s
         outputs = model(input_ids,
                         attention_mask=attention_mask,
                         labels=None)
-        print(outputs)
+        #print(outputs)
         predicted_probability = torch.softmax(outputs[0], dim=1)[0].tolist()  # batch_size only one
         
+        log.info(f"---------------------------------------------")
         log.info(f"Premise: {premise} - Hypothesis: {hypothesis}")
         log.info(
             f"Entailment: {predicted_probability[0]:.4f} | "
@@ -66,15 +70,18 @@ def set_seed(seed):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Inference in an NLI Model')
-    parser.add_argument('--pretrained_model', type=str, required=True, help='Pretrained dir model')
-    parser.add_argument('--tokenizer', type=str, required=True, help='Tokenizer model')
-    parser.add_argument('--h', type=str, help='Hypothesis')
-    parser.add_argument('--p', type=str, help='Premise')
-    parser.add_argument('--seed', type=int, default=42, help='SEED')
-    
-    args = parser.parse_args()
     setup_logger()
-    set_seed(args.seed)
-    logging.getLogger().info(args)
-    inference(pretrained_model=args.pretrained_model, premise=args.p, hypothesis=args.h, tokenizer=args.tokenizer)
+    # pretrained_model = "ynie/xlnet-large-cased-snli_mnli_fever_anli_R1_R2_R3-nli"
+    # pretrained_model = "ynie/roberta-large-snli_mnli_fever_anli_R1_R2_R3-nli"
+    pretrained_model = "ynie/albert-xxlarge-v2-snli_mnli_fever_anli_R1_R2_R3-nli"
+    
+    pairs = [("The cow is big.", "The cow chases the dog"),
+             ("If the cow is big, then the cat chases the dog", "The cat chases the dog"),
+             ("If the cow not is big, then the cat chases the dog", "The cat chases the dog"),
+             ("The cow is big. If the cow not is big, then the cat chases the dog", "The cat chases the dog"),
+             ("The cow is big", "If the cow is big, then the cat chases the dog")
+             ]
+    
+    model, tokenizer = load_transformer_model(model_name=pretrained_model, tokenizer=pretrained_model)
+    for p, h in pairs:
+        inference(model=model, premise=p, hypothesis=h, tokenizer=tokenizer)
