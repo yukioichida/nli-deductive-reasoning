@@ -72,13 +72,15 @@ def main(args):
     matched_dataloader, mismatched_dataloader = mnli_dataset.get_mnli_dev_dataloaders(batch_size=args.val_batch_size,
                                                                                       threads=args.threads)
     nli_dataset = SemanticFragmentDataset(tokenizer=tokenizer, max_length=256)
-    
-    logical_fragments = ['quantifier', 'negation', 'counting', 'conditional', 'comparative', 'boolean']
-    monotonicity_fragments = ['monotonicity_simple', 'monotonicity_hard']
-    if args.only_logic:
-        semantic_fragments = logical_fragments
+    if not args.fragment:
+        logical_fragments = ['quantifier', 'negation', 'counting', 'conditional', 'comparative', 'boolean']
+        monotonicity_fragments = ['monotonicity_simple', 'monotonicity_hard']
+        if args.only_logic:
+            semantic_fragments = logical_fragments
+        else:
+            semantic_fragments = logical_fragments + monotonicity_fragments
     else:
-        semantic_fragments = logical_fragments + monotonicity_fragments
+        semantic_fragments = [args.fragment]
     
     all_fragments_datasets = []
     all_validation_sets = {}
@@ -124,6 +126,7 @@ if __name__ == '__main__':
     parser.add_argument('--only_logic', action='store_true', default=False, help='Use only logic fragments')
     parser.add_argument('--validate', action='store_true', default=False, help='Validate only')
     parser.add_argument('--save_model', action='store_true', default=False, help='Save model')
+    parser.add_argument('--fragment', type=str, help='Single fragment', required=False)
     
     args = parser.parse_args()
     setup_logger()
